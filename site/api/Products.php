@@ -1,0 +1,129 @@
+<?php
+
+namespace ProcessWire;
+
+class Products {
+	// public static function getProductID($data) {
+	// 	$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, ['id|int']);
+		
+	// 	$response = new \StdClass();
+	// 	$product = wire('pages')->get('template=product, id=' .$data->id);
+
+	// 	if (!$product->id) {
+	// 		throw new \Exception('Product not found', 404);
+	// 	}
+
+	// 	$response->id = $product->id;
+	// 	$response->name = $product->name;
+
+	// 	return $response;
+	// }
+
+	public static function getProductName($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, ['name|text']);
+		
+		$response = new \StdClass();
+		$product = wire('pages')->get('template=product, name=' .$data->name);
+
+		if (!$product->id) {
+			throw new \Exception('Product not found', 404);
+		}
+
+		$categoryPage = $product->parent;          						// Page категории
+		$sectionPage  = $categoryPage->parent;     						// Page раздела (родитель категории)
+		$fullPrice = $product->price;    		   						// Полная цена товара
+		$discount = $product->discount;    		   						// Скидка товара
+		$price = ceil($fullPrice - (($fullPrice/100)*$discount));    	// Цена
+
+		$descriptionText = strip_tags((string) $product->body);
+		$descriptionText = html_entity_decode($descriptionText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+		$descriptionText = preg_replace("/\R/u", "\n", $descriptionText); // нормализовать переводы строк
+		$descriptionText = trim($descriptionText);
+
+		$months = [
+			1 => 'января', 2 => 'февраля', 3 => 'марта', 4 => 'апреля',
+			5 => 'мая', 6 => 'июня', 7 => 'июля', 8 => 'августа',
+			9 => 'сентября', 10 => 'октября', 11 => 'ноября', 12 => 'декабря'
+		];
+		$dateFrom = new \DateTime();
+		$dateTo   = new \DateTime();
+		$dateFrom->modify('+5 days');
+		$dateTo->modify('+7 days');
+		$delivery =
+		(int)$dateFrom->format('j') . ' ' . $months[(int)$dateFrom->format('n')]
+		. ' - ' .
+		(int)$dateTo->format('j') . ' ' . $months[(int)$dateTo->format('n')];
+
+		$specifications = [];
+		if ($product->season) {
+			$specifications[] = [
+				'name'  => 'Сезон',
+				'value' => $product->season->title,
+			];
+		}
+		if ($product->gender) {
+			$specifications[] = [
+				'name'  => 'Пол',
+				'value' => $product->gender->title,
+			];
+		}
+		if ($product->age) {
+			$specifications[] = [
+				'name'  => 'Возраст',
+				'value' => $product->age->title,
+			];
+		}
+		if ($product->color) {
+			$specifications[] = [
+				'name'  => 'Цвет',
+				'value' => $product->color->title,
+			];
+		}
+		if ($product->pattern) {
+			$specifications[] = [
+				'name'  => 'Узор',
+				'value' => $product->pattern->title,
+			];
+		}
+		if ($product->length) {
+			$specifications[] = [
+				'name'  => 'Длина изделия',
+				'value' => $product->length,
+			];
+		}
+		if ($product->main_material) {
+			foreach ($product->main_material as $item) {
+				$specifications[] = [
+					'name'  => 'Ткань - ' . $item->fabric->title,
+					'value' => $item->percentage,
+				];
+			}
+		}
+		if ($product->back_material) {
+			foreach ($product->back_material as $item) {
+				$specifications[] = [
+					'name'  => 'Ткань подкладки - ' . $item->fabric->title,
+					'value' => $item->percentage,
+				];
+			}
+		}
+
+		$response->id = $product->id;
+		$response->name = $product->name;
+		$response->productCategory = $categoryPage->title;
+		$response->productSection  = $sectionPage->title;
+		$response->title = $product->title;
+		$response->price = $price;
+		$response->fullPrice = $fullPrice;
+		$response->discount = $discount;
+		$response->description = $descriptionText;
+		$response->delivery = $delivery;
+		$response->sku = $product->ksu;
+		$response->category = $categoryPage->title . ', ' . $sectionPage->title;
+		$response->tag = $categoryPage->title;
+		$response->about = '';
+		$response->specifications = $specifications;
+
+		return $response;
+	}
+}

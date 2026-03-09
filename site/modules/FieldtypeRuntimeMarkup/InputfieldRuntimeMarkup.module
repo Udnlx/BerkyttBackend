@@ -1,0 +1,194 @@
+<?php namespace ProcessWire;
+
+/**
+* InputfieldRuntimeMarkup for ProcessWire.
+*
+* This Inputfield is a GUI for FieldtypeRuntimeMarkup.
+*
+* Note that this is a runtime-only field and can't be queried via selectors since its value
+* only exists at runtime. Nothing is saved to the database
+*
+* @author Kongondo <kongondo@gmail.com>
+* @sponsored by Andrey Valiev
+*
+* https://github.com/kongondo/FieldtypeRuntimeMarkup
+* Created August 2015
+*
+* ProcessWire 3.x
+* Copyright (C) 2016 by Ryan Cramer
+*
+* Licensed under MIT, see LICENSE.TXT
+*
+* http://www.processwire.com
+*
+*/
+
+class InputfieldRuntimeMarkup extends Inputfield {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'RuntimeMarkup',
+			'author' => 'Francis Otieno (Kongondo)',
+			'version' => '0.0.6',
+			'href' => 'https://processwire.com/talk/topic/10804-module-runtimemarkup-fieldtype-inputfield/',
+			'summary' => 'Allows rendering of custom markup within page editor via custom PHP snippet set in the field.',
+			'requires' => 'FieldtypeRuntimeMarkup',
+			);
+	}
+
+	/**
+	 * For initiating RuntimeMarkupUtilities class.
+	 *
+	 * @var class
+	 */
+	protected $rtmUtilities;
+
+	/**
+	 *
+	 * Set the page being edited to a property.
+	 *
+	 * @note: set in FieldtypeRuntimeMarkup.
+	 *
+	 */
+	public function setPage(Page $page) {
+		$this->pageEdit = $page;// @todo: delete if not using!
+	}
+
+	/**
+	 * Initialise the module. This is an optional initialisation method called before any execute methods.
+	 *
+	 * Initialises various class properties ready for use throughout the class.
+	 *
+	 * @access public
+	 *
+	 */
+	public function init() {
+		// parent::init();
+		// get the helper class (included in FieldtypeRuntimeMarkup.module file)
+		$this->rtmUtilities = new RuntimeMarkupUtilities();
+	}
+
+	/**
+	 *
+	 * Render the entire markup returned from FieldtypeRuntimeMarkup
+	 *
+	 */
+	public function ___render() {
+		if(!$this->runtimeCodeMode) return;
+		// add specified css file to $config->styles()
+		if(in_array((int)$this->addCSSFileMode, array(2,3))) $this->runtimeScriptStyleFiles('CSS');
+		// add specified js file to $config->scripts()
+		if(in_array((int)$this->addJSFileMode, array(2,3))) $this->runtimeScriptStyleFiles('JavaScript');
+		$out = $this->attr('value');
+		return $out;
+	}
+
+	/**
+	 *
+	 * Add custom CSS or JS file to the page being edited.
+	 *
+	 * Uses $config->styles() or $config->scripts().
+	 *
+	 * @access private
+	 * @param String $fileType Whether to add CSS or JS file.
+	 *
+	 */
+	private function runtimeScriptStyleFiles($fileType) {
+
+		$error = '';
+
+		// css
+		if($fileType == 'CSS') {
+			$configS = $this->wire('config')->styles;
+			$filenames = $this->addCSSFile;
+			$mode = (int) $this->addCSSFileMode;
+			$ext = '.css';
+		}
+
+		// js
+		elseif($fileType == 'JavaScript') {
+			$configS = $this->wire('config')->scripts;
+			$filenames = $this->addJSFile;
+			$mode = (int) $this->addJSFileMode;
+			$ext = '.js';
+		}
+
+		// get file with same name as this field vs. custom name
+		$filenames = 2 == $mode ? $this->fieldName : $filenames;
+
+		// if no filename, show error
+		if(!strlen(trim($filenames, ', '))) {
+			$error = sprintf(__('A %s file name needs to be specifed.'), $fileType);
+			$this->throwError($error);
+			return false;
+		}
+
+		$defaultPath = $this->rtmUtilities->getDefaultPath($this->defaultPath,2);// @note: getting URL
+
+		// $filenames is a csv string: convert to array
+		$filenames = explode(',', str_replace(' ', '', $filenames));
+
+		foreach ($filenames as $filename) {
+
+			if(!$filename) continue;
+
+			## validation ##
+
+			// make path relative to root if filename is not an absolute path
+			if(!$this->rtmUtilities->checkDotDot($filename)) {
+				$error .= $this->_('Filename may not have ".."') . ': ' . $filename  . "\n";
+				continue;
+			}
+
+			// convert directory separator if necessary
+			$filename = $this->rtmUtilities->convertDirectorySeparator($filename);
+
+			// add .css/.js extension if filename doesn't already have an extension
+			$filename = $this->rtmUtilities->addExtension($filename, $ext);
+
+			// show error if no file found
+			// @note: getting $filePath as PATH using getDefaultPath()
+			$filePath = $this->rtmUtilities->getDefaultPath($this->defaultPath);// @note: getting URL
+			$valid = $this->rtmUtilities->validateRuntimeJSCSSFile($filePath . $filename);
+			if(!$valid) {
+				$error .= $this->_('File not found') . ': ' . $filename  . "\n";
+				continue;
+			}
+			// good to go
+			else $configS->add($defaultPath . $filename);
+		}
+
+		if($error) {
+			if($ext == '.js' && 2 === (int) $this->addJSFileSuppressErrors) $this->throwError($error);
+			elseif($ext == '.css' && 2 === (int) $this->addCSSFileSuppressErrors) $this->throwError($error);
+		}
+
+	}
+
+	/**
+	 *
+	 * Throw error if runtime PHP Code did not evaluate as string or integer.
+	 *
+	 * @access private
+	 * @param String $error Error message to return;
+	 * @return Error $error ProcessWire error.
+	 *
+	 */
+	private function throwError($error='') {
+		if($error) return $this->error($error, Notice::allowMarkup);
+	}
+
+	/**
+	 * Process input for the values sent from this field
+	 *
+	 */
+	/*public function ___processInput(WireInputData $input) {
+
+		//nothing to do here
+		//no values sent
+
+	}*/
+
+
+
+}

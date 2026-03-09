@@ -1,0 +1,444 @@
+<?php
+
+namespace ProcessWire;
+
+/**
+ * ProcessWire Process module to import pages from a CSV file.
+ *
+ * Copyright 2011-2020 by Ryan Cramer
+ * Licensed under MPL 2.0
+ *
+ * https://processwire.com
+ *
+ *
+ * Importing file/image fields
+ * ===========================
+ * CSV column should contain full URL (or diskpath and filename) to the file you want to import.
+ * For fields that support multiple files, place each filename or URL on its own line, OR separate
+ * them by | (pipe) OR tab.
+ *
+ * Importing page reference fields
+ * ===============================
+ * Please make sure that your Page reference field has one or more pages selected for the "Parent"
+ * setting on the Details tab. If you want the import to be able to create paes, there must also
+ * be a single Template selected on the "Template" setting. Column values for page references
+ * may be page IDs, Titles, or Names separated by newline or pipe "|".
+ *
+ *
+ * @method bool isAllowedField(Field $field)
+ * @method bool importPageValue(Page $page, $name, $value)
+ *
+ *
+ */
+
+class ImportCSV extends Process implements Module {
+
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     *
+     * @return array
+     *
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'Загрузка остатков из CSV',
+            'version' => 108,
+            'summary' => 'Загрузка остатков по штрихкодам',
+            'author' => 'Евгений Буря',
+            'icon' => 'table',
+            'page' => array(
+                'name' => 'import-csv',
+                'parent' => 'setup',
+                'title' => 'Загрузка остатков из CSV'
+            ),
+            'permission' => 'importcsv',
+            'permissions' => [
+                'importcsv' => 'Manager'
+            ],
+            'requires' => 'ProcessWire>=3.0.123'
+        );
+    }
+
+    /**
+     * Constants for the csvDuplicate session var
+     *
+     */
+    const csvDuplicateSkip = 0;
+    const csvDuplicateNew = 1;
+    const csvDuplicateModify = 2;
+
+    /**
+     * Filename with path to CSV file
+     *
+     */
+    protected $csvFilename = '';
+
+    /**
+     * Instance of Template, used for imported pages
+     *
+     * @var Template|null
+     *
+     */
+    protected $template = null;
+
+    /**
+     * Instance of Page, representing the parent Page for imported pages
+     *
+     * @var Page|null
+     *
+     */
+    protected $parent = null;
+
+    /**
+     * List of Fieldtypes that we support importing to
+     *
+     */
+    protected $allowedFieldtypes = array(
+        'Checkbox',
+        'Datetime',
+        'Email',
+        'File',
+        'Float',
+        'Integer',
+        'Options',
+        'Page',
+        'PageTitle',
+        'Text',
+        'Textarea',
+        'Toggle',
+        'URL',
+    );
+
+    /**
+     * Initialize the module
+     *
+     */
+    public function init() {
+        parent::init();
+        ini_set('auto_detect_line_endings', true);
+    }
+
+    /**
+     * Executed when root url for module is accessed
+     *
+     */
+    public function ___execute() {
+        $form = $this->buildForm();
+        if ($this->input->post('submit')) {
+            return $this->processForm($form);
+        } else {
+            return $form->render();
+        }
+    }
+
+    /**
+     * Build the form
+     *
+     * @return InputfieldForm
+     *
+     */
+    protected function buildForm() {
+
+        /** @var InputfieldForm $form */
+        $form = $this->modules->get("InputfieldForm");
+        $form->description = "Шаг 1: Добавление файла для загрузки";
+
+        /** @var InputfieldFile $f */
+        $f = $this->modules->get("InputfieldFile");
+        $f->name = 'csv_file';
+        $f->label = 'CSV файл';
+        $f->icon = 'file-text';
+        $f->extensions = 'csv txt';
+        $f->maxFiles = 1;
+        $f->descriptionRows = 0;
+        $f->overwrite = true;
+        $f->required = false;
+        $form->add($f);
+
+        /** @var InputfieldFieldset $fieldset */
+        $fieldset = $this->modules->get("InputfieldFieldset");
+        $fieldset->attr('id', 'csv_advanced_options');
+        $fieldset->label = "Дополнительные параметры";
+        $fieldset->collapsed = Inputfield::collapsedYes;
+        $fieldset->icon = 'sliders';
+        $form->add($fieldset);
+
+        /** @var InputfieldRadios $f */
+        $f = $this->modules->get("InputfieldRadios");
+        $f->name = 'csv_delimeter';
+        $f->label = 'Поля разделены';
+        $f->addOption(1, 'Точка с запятой');
+        $f->addOption(2, 'Запятая');
+        $f->addOption(3, 'Tab');
+        $value = $this->sessionGet('csvDelimeter');
+        if (strlen($value)) {
+            $f->attr('value', $value === "\t" ? 2 : 1);
+        } else {
+            $f->attr('value', 1);
+        }
+        $f->columnWidth = 33;
+        $fieldset->add($f);
+
+        /** @var InputfieldText $f */
+        $f = $this->modules->get("InputfieldText");
+        $f->name = 'csv_enclosure';
+        $f->label = 'Выделение строк с помощью';
+        $f->description = "Если не уверены, то рекомендуем оставить (\").";
+        $f->attr('value', $this->sessionGet('csvEnclosure', '"'));
+        $f->attr('maxlength', 1);
+        $f->attr('size', 1);
+        $f->columnWidth = 33;
+        $fieldset->add($f);
+
+        /** @var InputfieldInteger $f */
+        $f = $this->modules->get("InputfieldInteger");
+        $f->name = 'csv_max_rows';
+        $f->label = 'Максимальное количество строк для импорта';
+        $f->description = "0 = no limit";
+        $f->attr('value', (int) $this->sessionGet('csvMaxRows', 0));
+        $f->attr('size', 5);
+        $f->columnWidth = 34;
+        $fieldset->add($f);
+
+        $this->addSubmit($form, 'Обновить остатки');
+
+        return $form;
+    }
+
+    /**
+     * Process the "Step 1" form and populate session variables with the results
+     *
+     * @param InputfieldForm $form
+     * @return bool
+     *
+     */
+    protected function processForm(InputfieldForm $form) {
+
+        set_time_limit(300);
+
+        $form->processInput($this->input->post);
+        if (count($form->getErrors())) return false;
+
+        switch ($form->getChildByName('csv_delimeter')->value) {
+            case '2':
+                $this->sessionSet('csvDelimeter', ",");
+                break;
+            case '3':
+                $this->sessionSet('csvDelimeter', "\t");
+                break;
+            default:
+                $this->sessionSet('csvDelimeter', ";");
+                break;
+        }
+        $this->sessionSet('csvEnclosure', substr($form->getChildByName('csv_enclosure')->value, 0, 1));
+        $this->sessionSet('csvMaxRows', (int) $form->getChildByName('csv_max_rows')->value);
+
+        /** @var Pagefiles|Pagefile $csvFile */
+        $csvFile = $form->getChildByName('csv_file')->value;
+
+        $csvBasename = 'data-' . $this->user->id . '.csv';
+        $csvFilename = $this->page->filesManager()->path() . $csvBasename;
+
+        if (count($csvFile)) {
+            $csvFile = $csvFile->first();
+            $csvFile->rename($csvBasename);
+            $csvFilename = $csvFile->filename;
+        } else {
+            $csvFilename = '';
+        }
+
+        if (!$csvFilename || !is_file($csvFilename)) {
+            $this->error("Missing required CSV file/data");
+            return false;
+        }
+
+        $fp = fopen($csvFilename, "r");
+        if ($fp === false) throw new WireException('Unable to open CSV file');
+
+        $numImported = 0;
+        $rowNum = 0;
+        $maxRows = $this->sessionGet('csvMaxRows');
+        $csvDelimeter = $this->sessionGet('csvDelimeter', ',');
+        $csvEnclosure = $this->sessionGet('csvEnclosure', '"');
+        $message = '';
+        $ostatki = [];
+        foreach (wire('pages')->find('template=product') as $item) {
+            foreach ($item->sizes as $el) {
+                $sn_code = wire('sanitizer')->digits($el->scancode, 13);
+                $ostatki[$sn_code] = [
+                    "product" => $item,
+                    "size" => wire('pages')->get("template=size, id=" . $el->size)->title,
+                    "current_quantity" => $el->quantity,
+                    "current_sn" => $sn_code,
+                    "imported_sn" => "",
+                    "new_quantity" => 0
+                ];
+            }
+        }
+
+        $not_found = [];
+
+        while (($data = fgetcsv($fp, 0, $csvDelimeter, $csvEnclosure)) !== false) {
+            $cnt = count($data);
+            // $code = preg_replace("/\s+|[[:^print:]]/", "", $data[0]);
+            $code = wire('sanitizer')->digits($data[0], 13);
+            $qnt = intval($data[1]);
+            if (isset($ostatki[$code])) {
+                $ostatki[$code]['imported_sn'] = $code;
+                $ostatki[$code]['new_quantity'] = $qnt;
+            } else {
+                $not_found[] = [
+                    "sn" => $code,
+                    "quantity" => $qnt
+                ];
+            }
+            // $key = array_search($code, \array_column($ostatki, 'current_sn'));
+            // if ($key > 0) {
+            //     $ostatki[$key]['imported_sn'] = $code;
+            //     $ostatki[$key]['new_quantity'] = $qnt;
+            // } else {
+            //     $not_found[] = [
+            //         "sn" => $code,
+            //         "quantity" => $qnt
+            //     ];
+            // }
+
+            // skip blank lines
+            if (!$cnt || empty($code)) continue;
+
+            $rowNum++;
+
+            if ($maxRows && $rowNum > $maxRows) break;
+        }
+
+        fclose($fp);
+
+        $message .= '<div uk-tab>';
+        $message .= '<li><a href="#">Обновленные остатки</a></li>';
+        $message .= '<li><a href="#">Отсутствующие штрихкоды</a></li>';
+        $message .= '</div>';
+        $message .= '<div class="uk-switcher uk-margin">';
+        $message .= '<div>';
+        $message .= '<table class="uk-table uk-table-small uk-table-responsive uk-table-divider">';
+        $message .= '<thead>';
+        $message .= '<tr>';
+        $message .= '<th>Товар</th>';
+        $message .= '<th>Размер</th>';
+        $message .= '<th>Штрихкод</th>';
+        $message .= '<th>Штрихкод из импорта</th>';
+        $message .= '<th>Текущее количество</th>';
+        $message .= '<th>Новое количество</th>';
+        $message .= '</tr>';
+        $message .= '</thead>';
+        $message .= '<tbody>';
+
+        foreach ($ostatki as $key => $value) {
+            $message .= '<tr>';
+            $message .= '<td>';
+            $message .= '<a class="uk-link" href="' . $value['product']->url . '">';
+            $message .= $value['product']->title;
+            $message .= '</a>';
+            $message .= '</td>';
+            $message .= '<td>';
+            $message .= $value['size'];
+            $message .= '</td>';
+            $message .= '<td>';
+            $message .= $value['current_sn'];
+            $message .= '</td>';
+            $message .= '<td>';
+            $message .= $value['imported_sn'];
+            $message .= '</td>';
+            $message .= '<td>';
+            $message .= $value['current_quantity'];
+            $message .= '</td>';
+            $message .= '<td>';
+            $message .= $value['new_quantity'];
+            $message .= '</td>';
+            $message .= '</tr>';
+            if ($value['current_sn']) {
+                $current_size = $value['product']->sizes->get('scancode=' . $value['current_sn']);
+                if ($current_size) {
+                    $current_size->of(false);
+                    $current_size->quantity = $value['new_quantity'];
+                    $current_size->save();
+                    if ($value['new_quantity'] > 0) {
+                        $numImported++;
+                    }
+                }
+            }
+        }
+        $message .= '</tbody>';
+        $message .= '</table>';
+        $message .= '</div>';
+        $message .= '<div>';
+
+        // $message .= '<h3>Штрихкода не найдены в базе сайта:</h3>';
+
+        foreach ($not_found as $key => $value) {
+            $message .= '<p class="uk-text-warning">' . $value['sn'] . '</p>';
+        }
+        $message .= '</div>';
+        $message .= '</div>';
+
+
+        $this->wire('files')->unlink($csvFilename);
+
+        return $this->processFormMarkup($numImported, $rowNum, $message);
+    }
+
+    /**
+     * Provide the completion output markup for processForm2
+     *
+     * @param int $numImported
+     * @return string
+     *
+     */
+    protected function processFormMarkup($numImported, $cnt, $message = '') {
+        return
+            "<h2>Импорт данных завершен!</h2>" .
+            "<p>Обновлено записей: $numImported</p>" .
+            "<p>Всего записей в файле импорта: $cnt</p>" .
+            "<hr>" .
+            "<div>" . $message . "</div>";
+    }
+
+    /**
+     * Add a submit button, moved to a function so we don't have to do this twice
+     *
+     * @param InputfieldForm $form
+     * @param string $value
+     *
+     */
+    protected function addSubmit(InputfieldForm $form, $value = 'Submit') {
+        /** @var InputfieldSubmit $f */
+        $f = $this->modules->get("InputfieldSubmit");
+        $f->name = 'submit';
+        $f->value = $value;
+        $form->add($f);
+    }
+
+    /**
+     * Get session value
+     *
+     * @param string $key
+     * @param null $fallback
+     * @return string|int|null
+     *
+     */
+    protected function sessionGet($key, $fallback = null) {
+        $value = $this->session->getFor($this, $key);
+        if ($value === null) $value = $fallback;
+        return $value;
+    }
+
+    /**
+     * Set session value
+     *
+     * @param string $key
+     * @param string|int $value
+     *
+     */
+    protected function sessionSet($key, $value) {
+        $this->session->setFor($this, $key, $value);
+    }
+}

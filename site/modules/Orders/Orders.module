@@ -1,0 +1,344 @@
+<?php
+
+namespace ProcessWire;
+
+/**
+ * ProcessWire Process module to import pages from a CSV file.
+ *
+ * Copyright 2011-2020 by Ryan Cramer
+ * Licensed under MPL 2.0
+ *
+ * https://processwire.com
+ *
+ *
+ * Importing file/image fields
+ * ===========================
+ * CSV column should contain full URL (or diskpath and filename) to the file you want to import.
+ * For fields that support multiple files, place each filename or URL on its own line, OR separate
+ * them by | (pipe) OR tab.
+ *
+ * Importing page reference fields
+ * ===============================
+ * Please make sure that your Page reference field has one or more pages selected for the "Parent"
+ * setting on the Details tab. If you want the import to be able to create paes, there must also
+ * be a single Template selected on the "Template" setting. Column values for page references
+ * may be page IDs, Titles, or Names separated by newline or pipe "|".
+ *
+ *
+ * @method bool isAllowedField(Field $field)
+ * @method bool importPageValue(Page $page, $name, $value)
+ *
+ *
+ */
+
+class Orders extends Process implements Module {
+
+    /**
+     * getModuleInfo is a module required by all modules to tell ProcessWire about them
+     *
+     * @return array
+     *
+     */
+    public static function getModuleInfo() {
+        return array(
+            'title' => 'Отчет по заказам',
+            'version' => 100,
+            'summary' => 'Отчет для отображения заказов',
+            'author' => 'Евгений Буря',
+            'icon' => 'table',
+            'page' => array(
+                'name' => 'orders',
+                'parent' => 'Admin',
+                'title' => 'Заказы'
+            ),
+            'permission' => 'orders',
+            'permissions' => [
+                'orders' => 'Manager'
+            ],
+            'requires' => 'ProcessWire>=3.0.123'
+        );
+    }
+
+    function _ukMergeOptions(array $defaults, $options) {
+
+        // allow for ProcessWire selector style strings
+        // allow for Uikit data attribute strings
+        if (is_string($options)) {
+            $options = str_replace(';', ',', $options);
+            $resultOptions = explode(',', $options);
+            $options = array();
+            foreach ($resultOptions as $value) {
+                if (strpos($value, '=')) {
+                    // key=value
+                    list($key, $value) = explode('=', $value, 2);
+                } else if (strpos($value, ':')) {
+                    // key: value
+                    list($key, $value) = explode(':', $value, 2);
+                } else {
+                    // boolean
+                    $key = $value;
+                    $value = true;
+                }
+                $key = trim($key);
+                if (is_string($value)) {
+                    $value = trim($value);
+                    // convert boolean strings to real booleans
+                    $v = strtolower($value);
+                    if ($v === 'false') $value = false;
+                    if ($v === 'true') $value = true;
+                }
+                $options[$key] = $value;
+            }
+        }
+
+        if (!is_array($options)) {
+            $options = array();
+        }
+
+        foreach ($options as $key => $value) {
+            if (is_int($key) && is_string($value)) {
+                // non-associative options convert to boolean attribute
+                $defaults[$value] = true;
+            }
+        }
+
+        return array_merge($defaults, $options);
+    }
+
+    function ukAlert($html, $type = '', $icon = '') {
+        $out = $type ? "<ul class='uk-alert-$type uk-alert'>" : "<div uk-alert>";
+        //if ($icon) $out .= ukIcon($icon) . ' ';
+        $out .= $html . "<a class='uk-alert-close' uk-close></a></div>";
+        return $out;
+    }
+
+    function ukPagination(PageArray $items, $filter, $options = array()) {
+
+        $page = $items->wire('page');
+
+        if (!$page->template->allowPageNum) {
+            return $this->ukAlert('This template needs page numbers enabled to support pagination', 'danger');
+        }
+
+        if (!$items->getLimit() || $items->getTotal() <= $items->getLimit()) return '';
+
+        $next = isset($options['next']) ? $options['next'] : __('Следующая');
+        $previous = isset($options['previous']) ? $options['previous'] : __('Предидущая');
+
+        // customize the MarkupPagerNav to output in Uikit-style pagination links
+        $defaults = array(
+            'center' => false,
+            'nextItemLabel' => trim("$next <span uk-pagination-next></span>"),
+            'nextItemClass' => '',
+            'previousItemLabel' => trim("<span uk-pagination-previous></span> $previous"),
+            'previousItemClass' => '',
+            'lastItemClass' => '',
+            'currentItemClass' => 'uk-active',
+            'separatorItemLabel' => '<span>&hellip;</span>',
+            'separatorItemClass' => 'uk-disabled',
+            'listMarkup' => "<ul class='uk-pagination'>{out}</ul>",
+            'itemMarkup' => "<li class='{class}'>{out}</li>",
+            'linkMarkup' => "<a href='{url}/?filter={$filter}'>{out}</a>",
+            'currentLinkMarkup' => "<span><a href='{url}'>{out}</a></span>"
+        );
+
+        $options = $this->_ukMergeOptions($defaults, $options);
+
+        if ($options['center']) {
+            $options['listMarkup'] = str_replace('uk-pagination', 'uk-pagination uk-flex-center', $options['listMarkup']);
+        }
+
+        /** @var MarkupPagerNav $pager */
+        $pager = $items->wire('modules')->get('MarkupPagerNav');
+        $pager->setBaseUrl($page->url);
+
+        return $pager->render($items, $options);
+    }
+
+    private function formatMoney($price) {
+        if ($price > 0) {
+            return \number_format($price, 0, ',', ' ') . ' ₽';
+        } else {
+            return \number_format(0, 0, ',', ' ') . ' ₽';
+        }
+    }
+
+    /**
+     * Initialize the module
+     *
+     */
+    public function init() {
+    }
+
+    /**
+     * Executed when root url for module is accessed
+     *
+     */
+    public function ___execute() {
+        if ($this->input->get('filter')) {
+            $filter = $this->input->get('filter');
+        } else {
+            $filter = 'all';
+        }
+        return $this->renderList($filter);
+    }
+
+    private function getOrderStatus($order) {
+        $out = '';
+        $status = '';
+        switch ($order->order_status) {
+            case '2':
+                $status = ' uk-label-warning';
+                break;
+            case '3':
+                $status = ' uk-label-success';
+                break;
+            case '4':
+                $status = ' uk-label-danger';
+                break;
+            case '5':
+                $status = ' uk-label-danger';
+                break;
+            default:
+                $status = '';
+                break;
+        }
+        $out = '<span class="uk-label' . $status . '">' . $order->order_status->title . '</span>';
+        return $out;
+    }
+
+    public function ___renderList($filter) {
+        $templates = wire('templates');
+        $homepage = wire('pages')->get('/');
+        $out = '<div class="uk-width-1-1">';
+        $out .= '<nav class="uk-navbar-container uk-navbar-transparent" uk-navbar>';
+        $out .= '<div class="nav-overlay uk-navbar-left">';
+        $out .= '<ul class="uk-navbar-nav">';
+        $out .= '<li><a href="' . $this->page->url() . '">Все</a></li>';
+        $out .= '<li><a href="' . $this->page->url() . '?filter=1"><span class="uk-badge uk-label-default uk-text-small uk-border-pill">Н</span>&nbsp;Новые</a></li>';
+        $out .= '<li><a href="' . $this->page->url() . '?filter=2"><span class="uk-badge uk-label-warning uk-text-small uk-border-pill">Д</span>&nbsp;Доставка</a></li>';
+        $out .= '<li><a href="' . $this->page->url() . '?filter=3"><span class="uk-badge uk-label-success uk-text-small uk-border-pill">З</span>&nbsp;Завершенные</a></li>';
+        $out .= '<li><a href="' . $this->page->url() . '?filter=4"><span class="uk-badge uk-label-danger uk-text-small uk-border-pill">О</span>&nbsp;Отмененные</a></li>';
+        $out .= '<li><a href="' . $this->page->url() . '?filter=5"><span class="uk-badge uk-label-danger uk-text-small uk-border-pill">S</span>&nbsp;Не удался</a></li>';
+        $out .= '</ul>';
+        $out .= '</div>';
+        $out .= '<div class="nav-overlay uk-navbar-right">';
+        $out .= '<a class="uk-navbar-toggle" uk-search-icon uk-toggle="target: .nav-overlay; animation: uk-animation-fade" href="#">Поиск по номеру заказа&nbsp</a>';
+        $out .= '</div>';
+        $out .= '<div class="nav-overlay uk-navbar-left uk-flex-1" hidden>';
+        $out .= '<div class="uk-navbar-item uk-width-expand">';
+        $out .= '<form class="uk-search uk-search-navbar uk-width-1-1">';
+        $out .= '<input class="uk-search-input uk-margin-small-left uk-text-large" type="search" name="q" placeholder="' . _x('Поиск', 'placeholder') . '" autofocus>';
+        $out .= '</form>';
+        $out .= '</div>';
+        $out .= '<a class="uk-navbar-toggle" uk-close uk-toggle="target: .nav-overlay; animation: uk-animation-fade" href="#"></a>';
+        $out .= '</div>';
+        $out .= '</nav>';
+
+        $out .= '<hr class="uk-margin-remove">';
+
+        $q = $this->sanitizer->text($this->input->get->q);
+
+        if ($filter && $filter != 'all') {
+            $pages = wire('pages')->find('template=order, limit=20, include=all, sort=-created, order_status=' . $filter . ', status<' . Page::statusTrash);
+            $summpages = wire('pages')->find('template=order, include=all, sort=-created, order_status=' . $filter . ', status<' . Page::statusTrash);
+            $field = wire('fields')->get('order_status');
+            $all_options = $field->type->getOptions($field);
+            $out .= '<div class="uk-text-small uk-text-muted uk-padding-small">Установлен фильтр по статусу заказа: <span class="uk-text-warning">' . $all_options->get("id=" . $filter)->title . '</span></div>';
+        }
+        if ($q) {
+            $this->input->whitelist('q', $q);
+            $q = $this->sanitizer->selectorValue($q);
+            $pages = wire('pages')->find('template=order, limit=20, include=all, sort=-created, title|body%=' . $q . ', status<' . Page::statusTrash);
+            $summpages = wire('pages')->find('template=order, include=all, sort=-created, title|body%=' . $q . ', status<' . Page::statusTrash);
+            $out .= '<div class="uk-text-small uk-text-muted uk-padding-small">поиск по: ' . $q . '</div>';
+        }
+        if ($filter == 'all') {
+            $pages = wire('pages')->find('template=order, limit=20, include=all, sort=-created, status<' . Page::statusTrash);
+            $summpages = wire('pages')->find('template=order, include=all, sort=-created, status<' . Page::statusTrash);
+        }
+        $summ = 0;
+        foreach ($summpages as $item) {
+            $amount = 0;
+            foreach ($item->products as $product) {
+                $amount = intval($amount) + intval($product->quantity) * intval($product->price);
+            }
+            $summ = $summ + $amount;
+        }
+        $out .= '<div class="uk-flex uk-flex-between"><div class="uk-padding-small uk-text-uppercase uk-text-muted">Всего найдено заказов: ' . $pages->getTotal() . '</div>';
+        $out .= '<div class="uk-padding-small uk-text-uppercase uk-text-muted">на сумму: ' . $this->formatMoney($summ) . '</div></div>';
+        $out .= '<table class="uk-table uk-table-hover uk-table-striped uk-table-small uk-table-middle">';
+        $out .= '<thead>';
+        $out .= '<tr>';
+        $out .= '<th class="uk-width-small uk-text-center"><i class="fa fa-calendar"></i></th>';
+        $out .= '<th class="uk-table-expand">Название</th>';
+        $out .= '<th class="uk-table-auto">Сумма</th>';
+        $out .= '<th class="uk-table-shrink">Статус</th>';
+        $out .= '</tr>';
+        $out .= '</thead>';
+        $out .= '<tbody>';
+        foreach ($pages as $page) {
+            $out .= '<tr>';
+            $cl = 'uk-text-emphasis';
+            $out .= '<td class="uk-text-center">';
+            $out .= '<div class="uk-text-small">' . date('d.m.y H:i', $page->created) . '</div>';
+            $out .= '</td>';
+            $out .= '<td>';
+            $out .= '<div>';
+            $out .= '<div><a class="' . $cl . '" href="/editor/page/edit/?id=' . $page->id . '">' . $page->title . ' - ' . $page->createdUser->lastname . ' ' . $page->createdUser->firstname . '</a></div>';
+            $out .= '<div class="uk-text-small">Телефон: ' . $page->createdUser->main_phone . '</div>';
+            $out .= '<div class="uk-text-small">Email: ' . $page->createdUser->email . '</div>';
+            if ($page->address == '') {
+                $out .= '<div class="uk-text-small">Самовывоз: ' . $homepage->address . '</div>';
+            } else {
+                $out .= '<div class="uk-text-small">Доставка: ' . $page->address . '</div>';
+            }
+            $out .= '</div>';
+            $out .= '</td>';
+            $amount = 0;
+            foreach ($page->products as $product) {
+                $amount = $amount + $product->quantity * $product->price;
+            }
+            $summ = $summ + $amount;
+            $out .= '<td>' . $this->formatMoney($amount) . '</td>';
+
+            $out .= '<td><div class="uk-flex-right uk-flex-nowrap uk-grid-collapse" uk-grid>';
+            $out .= $this->getOrderStatus($page);
+            $out .= '</div></td>';
+            $out .= '</tr>';
+        }
+        $out .= '</tbody>';
+        $out .= '</table>';
+        $out .= '</div>';
+        $out .= $this->ukPagination($pages, $filter);
+
+        return $out;
+    }
+
+
+
+    /**
+     * Provide the completion output markup for processForm2
+     *
+     * @param int $numImported
+     * @return string
+     *
+     */
+    public function ___install() {
+        parent::___install();
+        $permissions = wire('permissions');
+        if (!$permissions->has('orders')) {
+            $permission = $permissions->add('orders');
+            $permission->title = 'Orders view';
+            $permission->save();
+        }
+    }
+
+    public function ___uninstall() {
+        parent::___uninstall();
+        $permissions = wire('permissions');
+        if ($permissions->has('orders')) {
+            $permissions->delete($permissions->get('orders'));
+        }
+    }
+}

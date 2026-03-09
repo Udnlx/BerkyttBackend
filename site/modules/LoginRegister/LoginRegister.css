@@ -1,0 +1,55 @@
+.InputfieldForm {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+.InputfieldForm h2 {
+	text-align: center;
+	margin: 0;
+}
+
+.Inputfield {
+	clear: both;
+	box-sizing: border-box;
+}
+.Inputfield:not(.InputfieldSubmit) {
+	margin: 1em 0;
+}
+.InputfieldHeader {
+	/* primary label */
+	font-weight: normal;
+}
+.Inputfield input[type=text],
+.Inputfield input[type=email] {
+	width: 100%;
+}
+.InputfieldColumnWidth {
+	/* columns that are not 100% width */
+	float: left;
+	clear: none;
+}
+.InputfieldColumnWidthFirst {
+	/* first column in a row of Inputfield columns */
+	clear: both;
+}
+.InputfieldColumnWidth:not(.InputfieldColumnWidthFirst) {
+	/* any column except first, in a row of Inputfield columns */
+	margin-left: 1%;
+}
+
+.LoginRegisterMessage {
+	/* message notification */
+	color: #445d96;
+	font-weight: 300;
+	padding-bottom: 0.5em;
+	border-bottom: 1px solid;
+	font-size: 1.4em;
+	margin: 0;
+}
+.LoginRegisterError {
+	/* error notification */
+	color: indianred;
+	font-weight: bold;
+	text-align: center;
+	text-transform: uppercase;
+}

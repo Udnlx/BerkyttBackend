@@ -1,0 +1,497 @@
+//@import url('https://fonts.googleapis.com/css2?family=Gabriela&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tinos:wght@400;700&display=swap');
+
+// 1. Your custom variables and variable overwrites.
+$global-color: #0A0A0A;
+$global-link-color: #cd1c75;
+$global-text: #0A0A0A;
+$global-primary-background: #0A0A0A;
+$global-secondary-background: #cd1c75;
+$global-font-family: 'Tinos', serif;
+$base-font-size: 16px;
+$global-font-size: 16px;
+$base-body-font-weight: 400;
+$overlay-primary-color-mode: dark;
+$navbar-nav-item-color: #fff;
+$navbar-nav-item-hover-color: $global-secondary-background;
+$base-heading-font-weight: 400;
+$breadcrumb-divider: '»';
+$breadcrumb-divider-margin-horizontal: 10px;
+$global-link-hover-color: $global-secondary-background;
+$heading-small-font-size: 1.5rem;
+$navbar-nav-item-height: 40px;
+$inverse-link-text-hover-color: #cd1c75;
+$card-badge-right: none;
+$global-success-background: seagreen;
+$overlay-primary-background: rgba(0,0,0,0.6);
+$label-background: #eee;
+$label-color: #888;
+$lightbox-background: #fff;
+$offcanvas-bar-color-mode: $global-color;
+$table-small-cell-padding-vertical: 4px;
+$table-small-cell-padding-horizontal: 4px;
+$notification-width: 500px;
+$height-large-height: 650px;
+
+// 2. Import default variables and available mixins.
+@import "../node_modules/uikit/src/scss/variables-theme.scss";
+@import "../node_modules/uikit/src/scss/mixins-theme.scss";
+
+// 3. Your custom mixin overwrites.
+@mixin hook-base-heading() {
+    font-weight: bold;
+}
+
+@mixin hook-tooltip() {
+    text-align: center;
+}
+
+@mixin hook-offcanvas-bar() {
+    a {
+        color: $global-color;
+        &:hover {
+            color: $navbar-nav-item-color;
+        }
+    }
+    .uk-nav-default>li>a,
+    .uk-close,
+    .uk-nav-default .uk-nav-sub a {
+        color: $global-color;
+        font-weight: bold;
+        text-transform: uppercase;
+        &:hover {
+            color: $navbar-nav-item-color;
+            font-weight: normal;
+        }
+    }
+    hr,
+    .uk-heading-divider {
+        border-color: $global-color;
+    }
+    .uk-divider-icon::after,
+    .uk-divider-icon::before {
+        border-color: $global-color;
+    }
+    .uk-nav-default>li.uk-active>a,
+    .uk-nav-default .uk-nav-sub li.uk-active>a {
+        color: $navbar-nav-item-color;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+}
+
+@mixin hook-card-badge() {
+    font-size: 1.2rem !important;
+}
+
+@mixin hook-table-header-cell() {
+    text-transform: uppercase;
+    text-align: center;
+}
+
+@mixin hook-navbar-nav-item() {
+    text-transform: $navbar-nav-item-text-transform;
+    transition: 0.1s ease-in-out;
+    transition-property: color, background-color;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-bottom: 3px solid transparent;
+}
+
+@mixin hook-navbar-nav-item-hover() {
+    color: $global-secondary-background;
+    border-bottom: 3px solid;
+}
+
+@mixin hook-inverse-component-search() {
+    .uk-search-navbar .uk-search-input {
+        background-color: $inverse-search-navbar-background;
+        color: #fff;
+        @if(mixin-exists(hook-inverse-search-navbar-input)) {
+            @include hook-inverse-search-navbar-input();
+        }
+    }
+}
+
+@mixin hook-navbar-nav-item-active() {
+    color: $global-secondary-background;
+    font-weight: bold;
+    border-bottom: 3px solid;
+}
+
+// 4. Import UIkit.
+@import "../node_modules/uikit/src/scss/uikit-theme.scss";
+
+* {
+    letter-spacing: 0.4px;
+}
+
+table {
+    @extend .uk-table;
+    @extend .uk-table-divider;
+    @extend .uk-text-center;
+}
+
+div.uk-margin-remove>p {
+    margin: 0 !important;
+}
+
+cite {
+    font-style: normal;
+    text-transform: uppercase;
+    color: $global-secondary-background;
+}
+
+footer div {
+    color: #fff;
+}
+
+.uk-text-strike {
+    color: $global-muted-color;
+    text-decoration: line-through;
+}
+
+.img-shadow img {
+    filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 0.3));
+    transition: 200ms ease-in-out;
+}
+
+.png-shadow {
+    filter: drop-shadow(0px 0px 8px rgba(0, 0, 0, 0.3));
+}
+
+.img-shadow:hover img {
+    transform: scale(1.1);
+    transition-duration: 250ms;
+}
+
+.uk-text-shadow {
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
+}
+
+.CommentForm_new {
+    h3 {
+        @extend .uk-text-center;
+        @extend .uk-text-uppercase;
+    }
+}
+
+.CommentForm {
+    label {
+        @extend .uk-form-label;
+    }
+    input {
+        @extend .uk-input;
+    }
+    textarea {
+        @extend .uk-textarea;
+    }
+    button {
+        @extend .uk-button;
+        @extend .uk-button-primary;
+    }
+    .CommentFormSubmit {
+        @extend .uk-text-center;
+    }
+}
+
+.uk-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.uk-width-xsmall {
+    width: 4em;
+    padding: 0;
+    span {
+        width: 2em;
+    }
+}
+
+.uk-text-white {
+    color: #fff !important;
+}
+
+.uk-padding-xsmall {
+    padding: 5px 0;
+}
+
+.size {
+    text-align: center;
+    span {
+        padding: 2px 4px;
+        outline: none;
+    }
+    .uk-radio:checked+span {
+        background: #000;
+        color: #fff !important;
+        padding: 2px 4px;
+        outline: none;
+        min-width: 60px;
+        text-align: center;
+    }
+}
+
+input[name="username"] {
+    @extend .uk-input;
+}
+
+.ui-button {
+    @extend .uk-button;
+    @extend .uk-button-primary;
+}
+
+.uk-border-left {
+    border-left: 1px solid $global-muted-color;
+}
+
+.uk-border-right {
+    border-right: 1px solid $global-muted-color;
+}
+
+
+/* Chrome, Safari, Edge, Opera */
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+
+/* Firefox */
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.InputfieldForm {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.InputfieldForm h2 {
+    text-align: center;
+    margin: 0;
+}
+
+.Inputfield {
+    clear: both;
+    box-sizing: border-box;
+}
+
+.Inputfield:not(.InputfieldSubmit) {
+    margin: 1em 0;
+}
+
+.InputfieldHeader {
+    /* primary label */
+    font-weight: normal;
+}
+
+.Inputfield input[type=text],
+.Inputfield input[type=email] {
+    width: 100%;
+}
+
+.InputfieldColumnWidth {
+    /* columns that are not 100% width */
+    float: left;
+    clear: none;
+}
+
+.InputfieldColumnWidthFirst {
+    /* first column in a row of Inputfield columns */
+    clear: both;
+}
+
+.InputfieldColumnWidth:not(.InputfieldColumnWidthFirst) {
+    /* any column except first, in a row of Inputfield columns */
+    margin-left: 1%;
+}
+
+.LoginRegisterMessage {
+    /* message notification */
+    color: #445d96;
+    font-weight: 300;
+    padding-bottom: 0.5em;
+    border-bottom: 1px solid;
+    font-size: 1.4em;
+    margin: 0;
+}
+
+.LoginRegisterError {
+    /* error notification */
+    color: indianred;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.uk-section-transparent {
+    background: transparent !important;
+}
+
+.CDEK-widget__popup-mask {
+    z-index: 1000;
+}
+
+.InputfieldMaxWidth,
+.FieldtypeEmail,
+.InputfieldPasswordComplexify,
+.InputfieldPasswordConfirm {
+    @extend .uk-input;
+}
+
+#chartdiv {
+	width: 100%;
+	height: 100vh;
+	overflow: hidden;
+}
+
+.uk-margin-xxlarge-top {
+	margin-top: 180px !important;
+}
+
+.new {
+	padding: 0px 10px;
+	background: #21b599;
+	color: white;
+	margin: 20px 0 20px 10px;
+	text-transform: uppercase;
+	font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .uk-height-large {
+        height: 450px;
+        .uk-height-1-1 {
+            height: auto;
+            max-height: 100%;
+        }
+    }
+    .cart-info {
+        flex-direction: column;
+    }
+    .cart-info span.uk-h4 {
+        font-size: 15px;
+    }
+}
+
+/*INFOBANNER*/
+.infobanner {
+	padding: 8px 10px;
+	background-color: #ec008c;
+    margin: -20px 0 20px 0;
+}
+
+.infobanner p {
+	margin: 0;
+	font-family: Montserrat, sans-serif;
+	color: #ffffff;
+	font-size: 14px;
+	line-height: 1.1;
+	text-align: center;
+}
+
+@media (max-width: 900px) {
+	.infobanner p {
+		font-size: 14px;
+	}
+}
+
+@media (max-width: 400px) {
+	.infobanner p {
+		font-size: 14px;
+	}
+}
+/*INFOBANNER*/
+
+/*ВСПЛЫВАШКА COOKIES*/
+.uk-cookies {
+	position: fixed;
+    bottom: 10px;
+	left: 20px;
+	padding: 16px;
+	border-radius: 3px;
+	background: rgba(255, 255, 255, 0.90);
+	backdrop-filter: blur(4px);
+	width: 360px;
+	z-index: 99999;
+	transition: 2s;
+}
+
+.uk-cookies-text {
+    width: 100%;
+    box-sizing: border-box;
+    line-height: 1;
+    margin: 0;
+    font-size: 13px;
+}
+
+.show-cookies {
+	bottom: 20px;
+	transition: 2s;
+}
+
+.hide-cookies {
+	bottom: -230px;
+	transition: 2s;
+}
+
+.uk-cookies-link {
+	margin: 12px 0 0 0;
+	display: flex;
+	justify-content: space-between;
+}
+
+.uk-cookies-close {
+	cursor: pointer;
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 20px;
+	height: 20px;
+}
+
+@media (max-width: 639px) {
+	.uk-cookies {
+		position: fixed;
+		left: 50%;
+		transform: translate(-50%);
+		width: 310px;
+	}
+
+	.show-cookies {
+		top: 20px;
+		bottom: auto;
+	}
+
+	.hide-cookies {
+		top: -370px;
+		bottom: auto;
+	}
+}
+
+@media (max-width: 374px) {
+	.uk-cookies {
+		position: fixed;
+		left: 50%;
+		transform: translate(-50%);
+		width: 240px;
+	}
+
+	.uk-cookies-link {
+		margin: 12px 0 0 0;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.uk-cookies-link-learn {
+		margin: 8px 0 0 0;
+		width: 100%;
+		height: 38px;
+		font-size: 12px;
+	}
+}
+/*ВСПЛЫВАШКА COOKIES*/
