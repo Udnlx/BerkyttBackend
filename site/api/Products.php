@@ -35,10 +35,43 @@ class Products {
 		$discount = $product->discount;    		   						// Скидка товара
 		$price = ceil($fullPrice - (($fullPrice/100)*$discount));    	// Цена
 
+		$images = [];
+		foreach ($product->images as $image) {
+			$images[] = $image->url;
+		}
+
+		$video = [];
+		if ($product->video) {
+			$video[] = $product->video->url;
+		}
+
 		$descriptionText = strip_tags((string) $product->body);
 		$descriptionText = html_entity_decode($descriptionText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 		$descriptionText = preg_replace("/\R/u", "\n", $descriptionText); // нормализовать переводы строк
 		$descriptionText = trim($descriptionText);
+
+		$sameModels = [];
+		if ($product->same_models) {
+			foreach ($product->same_models as $model) {
+				$sameModels[] = [
+					'title'  => $model->title,
+					'name'  => $model->name,
+					'color'  => $model->color->title,
+				];
+			}
+		}
+
+		$sizes = [];
+		foreach ($product->sizes as $size) {
+			$sizes[] = [
+				'scancode'  => $size->scancode,
+				'storage'  => $size->storage,
+				'russianSize'  => $size->size->russian_size,
+				'size'  => $size->size->title,
+				'quantity'  => $size->quantity,
+				'price'  => $size->price,
+			];
+		}
 
 		$months = [
 			1 => 'января', 2 => 'февраля', 3 => 'марта', 4 => 'апреля',
@@ -116,7 +149,11 @@ class Products {
 		$response->price = $price;
 		$response->fullPrice = $fullPrice;
 		$response->discount = $discount;
+		$response->images = $images;
+		$response->video = $video;
 		$response->description = $descriptionText;
+		$response->sameModels = $sameModels;
+		$response->sizes = $sizes;
 		$response->delivery = $delivery;
 		$response->sku = $product->ksu;
 		$response->category = $categoryPage->title . ', ' . $sectionPage->title;
