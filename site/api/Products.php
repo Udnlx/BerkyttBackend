@@ -33,7 +33,14 @@ class Products {
 		$sectionPage  = $categoryPage->parent;     						// Page раздела (родитель категории)
 		$fullPrice = $product->price;    		   						// Полная цена товара
 		$discount = $product->discount;    		   						// Скидка товара
-		$price = ceil($fullPrice - (($fullPrice/100)*$discount));    	// Цена
+
+		$fullPriceRaw = (string) $product->price;
+		$discountRaw  = (string) $product->discount;
+
+		$fullPrice = (float) str_replace([' ', ','], ['', '.'], $fullPriceRaw);
+		$discount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $discountRaw);
+
+		$price = (int) ceil($fullPrice - ($fullPrice * $discount / 100));   	// Цена
 
 		$images = [];
 		foreach ($product->images as $image) {
@@ -141,6 +148,21 @@ class Products {
 			}
 		}
 
+		$comments = [];
+		$totalComments = 0;
+		$productComments = $product->comments->find("status>=0");
+		foreach ($productComments as $comment) {
+			$totalComments ++;
+			$comments[] = [
+				'id'  => $comment->id,
+				'author' => $comment->cite,
+				'email' => $comment->email,
+				'text' => $comment->text,
+				'created' => $comment->created,
+			];
+		}
+
+
 		$response->id = $product->id;
 		$response->name = $product->name;
 		$response->productCategory = $categoryPage->title;
@@ -160,6 +182,8 @@ class Products {
 		$response->tag = $categoryPage->title;
 		$response->about = '';
 		$response->specifications = $specifications;
+		$response->comments = $comments;
+		$response->totalComments = $totalComments;
 
 		return $response;
 	}

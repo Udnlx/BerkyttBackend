@@ -68,8 +68,12 @@ function getDiscountPrice($page) {
         $dg = __('скидка установлена для группы товаров');
     }
     $total = $price;
+
+    $price = (float) str_replace(',', '.', $price);
+    $discount = (float) str_replace(['%', ','], ['', '.'], $discount);
+
     if ($discount != 0) {
-        $total = $price - $price * $discount / 100;
+        $total = $price - ($price * $discount / 100);
     }
     $out = [
         'price' => $price,
