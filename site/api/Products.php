@@ -182,8 +182,8 @@ class Products {
 		$response->tag = $categoryPage->title;
 		$response->about = '';
 		$response->specifications = $specifications;
-		$response->comments = $comments;
 		$response->totalComments = $totalComments;
+		$response->comments = $comments;
 
 		return $response;
 	}
