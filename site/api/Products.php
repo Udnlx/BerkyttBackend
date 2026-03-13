@@ -19,6 +19,107 @@ class Products {
 	// 	return $response;
 	// }
 
+	public static function getCategories($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, ['section|text']);
+		
+		$response = new \StdClass();
+
+		$pageSection = wire('pages')->get('template=products, name=' .$data->section);
+		$allCategories = $pageSection->children('template=category');
+
+		$categories = [];
+		foreach ($allCategories as $category) {
+			$categories[] = [
+				'id'  => $category->id,
+				'name'  => $category->name,
+				'title'  => $category->title,
+				'count' => $category->numChildren(),
+			];
+		}
+
+		$response->section = $data->section;
+		$response->categories = $categories;
+
+		return $response;
+	}
+
+	public static function getProducts($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, [
+			'section|text',
+			'category|text',
+			'page|int',
+    	]);
+		
+		$response = new \StdClass();
+
+		$limit = 9;
+		$p = 0;
+		$current_page = 1;
+
+		if ($data->page) {
+			$p = ($data->page - 1) * $limit;
+			$current_page = $data->page;
+			if ($p < $limit) {
+				$p = 0;
+				$current_page = 1;
+			}
+		}
+
+		$pageSection = wire('pages')->get('template=products, name=' .$data->section);
+		$pageCategory = $pageSection->get('template=category, name=' .$data->category);
+		$allProducts = $pageCategory->children('template=product, start=' . $p . ', limit=' . $limit);
+
+		$products = [];
+		foreach ($allProducts as $product) {
+			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
+    		$img1 = $images->first();     // первая
+    		$img2 = $images->eq(1);       // вторая
+
+			$likeitFullPriceRaw = (string) $product->price;
+			$likeitDiscountRaw  = (string) $product->discount;
+
+			$likeitFullPrice = (float) str_replace([' ', ','], ['', '.'], $likeitFullPriceRaw);
+			$likeitDiscount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $likeitDiscountRaw);
+
+			$price = (int) ceil($likeitFullPrice - ($likeitFullPrice * $likeitDiscount / 100)); 
+			
+			$endDate = new \DateTime();
+			$badge = 'ТОП';
+			$badgeType = 'top';
+			if ($product->new == 1) {
+				$badge = 'НОВИНКА';
+				$badgeType = 'new';
+			}
+			if ($likeitDiscount > 0) {
+				$badge = 'РАСПРОДАЖА';
+				$badgeType = 'sale';
+				$endDate->modify('+5 days');
+    			$endDate->setTime(23, 59, 59);
+			}
+
+			$products[] = [
+				'id'  => $product->id,
+				'name'  => $product->name,
+				'title'  => $product->title,
+				'image'      => $img1 ? $img1->url : '',
+    			'hoverImage' => $img2 ? $img2->url : ($img1 ? $img1->url : ''),
+				'price'  => $price,
+				'fullPrice'  => $likeitFullPrice,
+				'discount'  => $likeitDiscount,
+				'badge'  => $badge,
+				'badgeType'  => $badgeType,
+				'endDate'  => $endDate->format('Y-m-d\TH:i:s'),
+			];
+		}
+
+		$response->section = $data->section;
+		$response->category = $data->category;
+		$response->page = $data->page;
+		$response->products = $products;
+
+		return $response;
+	}
+
 	public static function getProductName($data) {
 		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, ['name|text']);
 		
