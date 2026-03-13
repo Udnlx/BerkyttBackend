@@ -31,8 +31,6 @@ class Products {
 
 		$categoryPage = $product->parent;          						// Page категории
 		$sectionPage  = $categoryPage->parent;     						// Page раздела (родитель категории)
-		$fullPrice = $product->price;    		   						// Полная цена товара
-		$discount = $product->discount;    		   						// Скидка товара
 
 		$fullPriceRaw = (string) $product->price;
 		$discountRaw  = (string) $product->discount;
@@ -162,6 +160,48 @@ class Products {
 			];
 		}
 
+		$likeit = [];
+		$likeitProducts = $categoryPage->children('template=product, limit=4');
+		foreach ($likeitProducts as $likeitProduct) {
+			$img1 = $likeitProduct->images->eq(0);
+			$img2 = $likeitProduct->images->eq(1);
+
+			$likeitFullPriceRaw = (string) $likeitProduct->price;
+			$likeitDiscountRaw  = (string) $likeitProduct->discount;
+
+			$likeitFullPrice = (float) str_replace([' ', ','], ['', '.'], $likeitFullPriceRaw);
+			$likeitDiscount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $likeitDiscountRaw);
+
+			$price = (int) ceil($likeitFullPrice - ($likeitFullPrice * $likeitDiscount / 100)); 
+			
+			$endDate = new \DateTime();
+			$badge = 'ТОП';
+			$badgeType = 'top';
+			if ($likeitProduct->new == 1) {
+				$badge = 'НОВИНКА';
+				$badgeType = 'new';
+			}
+			if ($likeitDiscount > 0) {
+				$badge = 'РАСПРОДАЖА';
+				$badgeType = 'sale';
+				$endDate->modify('+5 days');
+    			$endDate->setTime(23, 59, 59);
+			}
+
+			$likeit[] = [
+				'id'  => $likeitProduct->id,
+				'name'  => $likeitProduct->name,
+				'title'  => $likeitProduct->title,
+				'image'      => $img1 ? $img1->url : '',
+    			'hoverImage' => $img2 ? $img2->url : ($img1 ? $img1->url : ''),
+				'price'  => $price,
+				'fullPrice'  => $likeitFullPrice,
+				'discount'  => $likeitDiscount,
+				'badge'  => $badge,
+				'badgeType'  => $badgeType,
+				'endDate'  => $endDate->format('Y-m-d\TH:i:s'),
+			];
+		}
 
 		$response->id = $product->id;
 		$response->name = $product->name;
@@ -184,6 +224,8 @@ class Products {
 		$response->specifications = $specifications;
 		$response->totalComments = $totalComments;
 		$response->comments = $comments;
+		$response->idCategory = $categoryPage->id;
+		$response->likeit = $likeit;
 
 		return $response;
 	}
