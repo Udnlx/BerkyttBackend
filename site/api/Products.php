@@ -24,7 +24,15 @@ class Products {
 		
 		$response = new \StdClass();
 
-		$pageSection = wire('pages')->get('template=products, name=' .$data->section);
+		$section = '';
+		if ($data->section == 'men') {
+			$section = 'catalog';
+		}
+		if ($data->section == 'women') {
+			$section = 'women-catalog';
+		}
+
+		$pageSection = wire('pages')->get('template=products, name=' . $section);
 		$allCategories = $pageSection->children('template=category');
 
 		$categories = [];
@@ -43,12 +51,12 @@ class Products {
 		return $response;
 	}
 
+
+
+
+	
 	public static function getProducts($data) {
-		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, [
-			'section|text',
-			'category|text',
-			'page|int',
-    	]);
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
 		
 		$response = new \StdClass();
 
@@ -65,8 +73,16 @@ class Products {
 			}
 		}
 
-		$pageSection = wire('pages')->get('template=products, name=' .$data->section);
-		$pageCategory = $pageSection->get('template=category, name=' .$data->category);
+		$section = '';
+		if ($data->section == 'men') {
+			$section = 'catalog';
+		}
+		if ($data->section == 'women') {
+			$section = 'women-catalog';
+		}
+
+		$pageSection = wire('pages')->get('template=products, name=' . $section);
+		$pageCategory = $pageSection->get('template=category, name=' . $data->category);
 		$allProducts = $pageCategory->children('template=product, start=' . $p . ', limit=' . $limit);
 
 		$products = [];
@@ -84,8 +100,8 @@ class Products {
 			$price = (int) ceil($likeitFullPrice - ($likeitFullPrice * $likeitDiscount / 100)); 
 			
 			$endDate = new \DateTime();
-			$badge = 'ТОП';
-			$badgeType = 'top';
+			$badge = '';
+			$badgeType = '';
 			if ($product->new == 1) {
 				$badge = 'НОВИНКА';
 				$badgeType = 'new';
@@ -115,10 +131,15 @@ class Products {
 		$response->section = $data->section;
 		$response->category = $data->category;
 		$response->page = $data->page;
+		$response->totalPage = ceil($allProducts->getTotal() / $limit);;
 		$response->products = $products;
 
 		return $response;
 	}
+
+
+
+
 
 	public static function getProductName($data) {
 		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, ['name|text']);
@@ -273,7 +294,7 @@ class Products {
 			$likeitFullPrice = (float) str_replace([' ', ','], ['', '.'], $likeitFullPriceRaw);
 			$likeitDiscount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $likeitDiscountRaw);
 
-			$price = (int) ceil($likeitFullPrice - ($likeitFullPrice * $likeitDiscount / 100)); 
+			$likeitprice = (int) ceil($likeitFullPrice - ($likeitFullPrice * $likeitDiscount / 100)); 
 			
 			$endDate = new \DateTime();
 			$badge = 'ТОП';
@@ -295,7 +316,7 @@ class Products {
 				'title'  => $likeitProduct->title,
 				'image'      => $img1 ? $img1->url : '',
     			'hoverImage' => $img2 ? $img2->url : ($img1 ? $img1->url : ''),
-				'price'  => $price,
+				'price'  => $likeitprice,
 				'fullPrice'  => $likeitFullPrice,
 				'discount'  => $likeitDiscount,
 				'badge'  => $badge,
