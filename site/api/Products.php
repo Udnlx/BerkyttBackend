@@ -98,8 +98,8 @@ class Products {
 		}
 
 		$size = null;
-		if ($data->size) {
-			$size = $data->size;
+		if (!empty($data->size)) {
+			$size = (int) $data->size;
 		}
 
 		$pageSection = wire('pages')->get('template=products, name=' . $section);
@@ -109,15 +109,43 @@ class Products {
 		if ($size) {
 			$selector .= ', sizes.size=' . $size;
 		}
-		$selector .= ', start=' . $p . ', limit=' . $limit;
 
 		$allProducts = $pageCategory->children($selector);
 
-		$products = [];
+		$filteredProducts = new \ProcessWire\PageArray();
+
 		foreach ($allProducts as $product) {
+			if ($size) {
+				$hasValidSize = false;
+
+				foreach ($product->sizes as $sizeItem) {
+					$sizeId = (int) $sizeItem->size->id;
+					$quantityRaw = $sizeItem->quantity;
+
+					$hasQuantity = $quantityRaw !== null && trim((string) $quantityRaw) !== '' && (int) $quantityRaw > 0;
+
+					if ($sizeId === $size && $hasQuantity) {
+						$hasValidSize = true;
+						break;
+					}
+				}
+
+				if (!$hasValidSize) {
+					continue;
+				}
+			}
+
+			$filteredProducts->add($product);
+		}
+
+		$total = $filteredProducts->count();
+		$pagedProducts = $filteredProducts->slice($p, $limit);
+
+		$products = [];
+		foreach ($pagedProducts as $product) {
 			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
-    		$img1 = $images->first();     // первая
-    		$img2 = $images->eq(1);       // вторая
+			$img1 = $images->first();
+			$img2 = $images->eq(1);
 
 			$likeitFullPriceRaw = (string) $product->price;
 			$likeitDiscountRaw  = (string) $product->discount;
@@ -130,36 +158,38 @@ class Products {
 			$endDate = new \DateTime();
 			$badge = '';
 			$badgeType = '';
+
 			if ($product->new == 1) {
 				$badge = 'НОВИНКА';
 				$badgeType = 'new';
 			}
+
 			if ($likeitDiscount > 0) {
 				$badge = 'РАСПРОДАЖА';
 				$badgeType = 'sale';
 				$endDate->modify('+5 days');
-    			$endDate->setTime(23, 59, 59);
+				$endDate->setTime(23, 59, 59);
 			}
 
 			$products[] = [
-				'id'  => $product->id,
-				'name'  => $product->name,
-				'title'  => $product->title,
-				'image'      => $img1 ? $img1->url : '',
-    			'hoverImage' => $img2 ? $img2->url : ($img1 ? $img1->url : ''),
-				'price'  => $price,
-				'fullPrice'  => $likeitFullPrice,
-				'discount'  => $likeitDiscount,
-				'badge'  => $badge,
-				'badgeType'  => $badgeType,
-				'endDate'  => $endDate->format('Y-m-d\TH:i:s'),
+				'id' => $product->id,
+				'name' => $product->name,
+				'title' => $product->title,
+				'image' => $img1 ? $img1->url : '',
+				'hoverImage' => $img2 ? $img2->url : ($img1 ? $img1->url : ''),
+				'price' => $price,
+				'fullPrice' => $likeitFullPrice,
+				'discount' => $likeitDiscount,
+				'badge' => $badge,
+				'badgeType' => $badgeType,
+				'endDate' => $endDate->format('Y-m-d\TH:i:s'),
 			];
 		}
 
 		$response->section = $data->section;
 		$response->category = $data->category;
-		$response->page = $data->page;
-		$response->totalPage = ceil($allProducts->getTotal() / $limit);
+		$response->page = $current_page;
+		$response->totalPage = ceil($total / $limit);
 		$response->selectedSize = $size;
 		$response->products = $products;
 
