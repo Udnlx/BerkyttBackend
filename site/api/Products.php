@@ -81,26 +81,37 @@ class Products {
 		$p = 0;
 		$current_page = 1;
 
-		if ($data->page) {
-			$p = ($data->page - 1) * $limit;
-			$current_page = $data->page;
-			if ($p < $limit) {
-				$p = 0;
+		if (!empty($data->page)) {
+			$current_page = (int) $data->page;
+			if ($current_page < 1) {
 				$current_page = 1;
 			}
+			$p = ($current_page - 1) * $limit;
 		}
 
 		$section = '';
-		if ($data->section == 'men') {
+		if (!empty($data->section) && $data->section === 'men') {
 			$section = 'catalog';
 		}
-		if ($data->section == 'women') {
+		if (!empty($data->section) && $data->section === 'women') {
 			$section = 'women-catalog';
+		}
+
+		$size = null;
+		if ($data->size) {
+			$size = $data->size;
 		}
 
 		$pageSection = wire('pages')->get('template=products, name=' . $section);
 		$pageCategory = $pageSection->get('template=category, name=' . $data->category);
-		$allProducts = $pageCategory->children('template=product, start=' . $p . ', limit=' . $limit);
+
+		$selector = 'template=product';
+		if ($size) {
+			$selector .= ', sizes.size=' . $size;
+		}
+		$selector .= ', start=' . $p . ', limit=' . $limit;
+
+		$allProducts = $pageCategory->children($selector);
 
 		$products = [];
 		foreach ($allProducts as $product) {
@@ -148,7 +159,8 @@ class Products {
 		$response->section = $data->section;
 		$response->category = $data->category;
 		$response->page = $data->page;
-		$response->totalPage = ceil($allProducts->getTotal() / $limit);;
+		$response->totalPage = ceil($allProducts->getTotal() / $limit);
+		$response->selectedSize = $size;
 		$response->products = $products;
 
 		return $response;
