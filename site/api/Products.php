@@ -27,9 +27,11 @@ class Products {
 		$section = '';
 		if ($data->section == 'men') {
 			$section = 'catalog';
+			$sectionSize = 'razmery-dlia-muzhchin';
 		}
 		if ($data->section == 'women') {
 			$section = 'women-catalog';
+			$sectionSize = 'raziery-dlia-zhenshchin';
 		}
 
 		$pageSection = wire('pages')->get('template=products, name=' . $section);
@@ -45,8 +47,23 @@ class Products {
 			];
 		}
 
+		$pageSizes = wire('pages')->get('template=sizes');
+		$pageSizesSection = $pageSizes->get('name=' . $sectionSize);
+		$allSizesSection = $pageSizesSection->children();
+
+		$sizes = [];
+		foreach ($allSizesSection as $size) {
+			$sizes[] = [
+				'id'  => $size->id,
+				'name'  => $size->name,
+				'title'  => $size->title,
+				'russianSize' => $size->russian_size,
+			];
+		}
+
 		$response->section = $data->section;
 		$response->categories = $categories;
+		$response->sizes = $sizes;
 
 		return $response;
 	}
