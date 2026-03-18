@@ -356,8 +356,12 @@ class Products {
 			$likeitprice = (int) ceil($likeitFullPrice - ($likeitFullPrice * $likeitDiscount / 100)); 
 			
 			$endDate = new \DateTime();
-			$badge = 'ТОП';
-			$badgeType = 'top';
+			$badge = '';
+			$badgeType = '';
+			if ($likeitProduct->badge) {
+				$badge = $likeitProduct->badge->title;
+				$badgeType = $likeitProduct->badge->name;
+			}
 			if ($likeitProduct->new == 1) {
 				$badge = 'НОВИНКА';
 				$badgeType = 'new';
