@@ -147,15 +147,20 @@ class Products {
 			$img1 = $images->first();
 			$img2 = $images->eq(1);
 
-			$likeitFullPriceRaw = (string) $product->price;
-			$likeitDiscountRaw  = (string) $product->discount;
+			$productFullPriceRaw = (string) $product->price;
+			$productDiscountRaw  = (string) $product->discount;
 
-			$likeitFullPrice = (float) str_replace([' ', ','], ['', '.'], $likeitFullPriceRaw);
-			$likeitDiscount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $likeitDiscountRaw);
+			$productFullPrice = (float) str_replace([' ', ','], ['', '.'], $productFullPriceRaw);
+			$productDiscount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $productDiscountRaw);
 
-			$price = (int) ceil($likeitFullPrice - ($likeitFullPrice * $likeitDiscount / 100)); 
+			$price = (int) ceil($productFullPrice - ($productFullPrice * $productDiscount / 100)); 
 			
-			$endDate = new \DateTime();
+			$raw = (string) $product->timer_sale;
+			$dt = \DateTime::createFromFormat('d.m.Y', $raw);
+			if ($dt) {
+				$dt->setTime(23, 59, 59);
+			}
+			$endDate = $dt ? $dt->format('Y-m-d\TH:i:s') : null;
 			$badge = '';
 			$badgeType = '';
 			if ($product->badge) {
@@ -168,11 +173,9 @@ class Products {
 				$badgeType = 'new';
 			}
 
-			if ($likeitDiscount > 0) {
+			if ($productDiscount > 0) {
 				$badge = 'РАСПРОДАЖА';
 				$badgeType = 'sale';
-				$endDate->modify('+5 days');
-				$endDate->setTime(23, 59, 59);
 			}
 
 			$products[] = [
@@ -182,11 +185,11 @@ class Products {
 				'image' => $img1 ? $img1->url : '',
 				'hoverImage' => $img2 ? $img2->url : ($img1 ? $img1->url : ''),
 				'price' => $price,
-				'fullPrice' => $likeitFullPrice,
-				'discount' => $likeitDiscount,
+				'fullPrice' => $productFullPrice,
+				'discount' => $productDiscount,
 				'badge' => $badge,
 				'badgeType' => $badgeType,
-				'endDate' => $endDate->format('Y-m-d\TH:i:s'),
+				'endDate' => $endDate,
 			];
 		}
 
@@ -359,7 +362,12 @@ class Products {
 
 			$likeitprice = (int) ceil($likeitFullPrice - ($likeitFullPrice * $likeitDiscount / 100)); 
 			
-			$endDate = new \DateTime();
+			$raw = (string) $likeitProduct->timer_sale;
+			$dt = \DateTime::createFromFormat('d.m.Y', $raw);
+			if ($dt) {
+				$dt->setTime(23, 59, 59);
+			}
+			$endDate = $dt ? $dt->format('Y-m-d\TH:i:s') : null;
 			$badge = '';
 			$badgeType = '';
 			if ($likeitProduct->badge) {
@@ -373,8 +381,6 @@ class Products {
 			if ($likeitDiscount > 0) {
 				$badge = 'РАСПРОДАЖА';
 				$badgeType = 'sale';
-				$endDate->modify('+5 days');
-    			$endDate->setTime(23, 59, 59);
 			}
 
 			$likeit[] = [
@@ -388,7 +394,7 @@ class Products {
 				'discount'  => $likeitDiscount,
 				'badge'  => $badge,
 				'badgeType'  => $badgeType,
-				'endDate'  => $endDate->format('Y-m-d\TH:i:s'),
+				'endDate'  => $endDate,
 			];
 		}
 
