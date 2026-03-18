@@ -243,6 +243,11 @@ class Products {
 		$descriptionText = preg_replace("/\R/u", "\n", $descriptionText); // нормализовать переводы строк
 		$descriptionText = trim($descriptionText);
 
+		$aboutText = strip_tags((string) $product->about_product);
+		$aboutText = html_entity_decode($aboutText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+		$aboutText = preg_replace("/\R/u", "\n", $aboutText); // нормализовать переводы строк
+		$aboutText = trim($aboutText);
+
 		$sameModels = [];
 		if ($product->same_models) {
 			foreach ($product->same_models as $model) {
@@ -409,6 +414,7 @@ class Products {
 		$response->images = $images;
 		$response->video = $video;
 		$response->description = $descriptionText;
+		$response->aboutProduct = $aboutText;
 		$response->sameModels = $sameModels;
 		$response->sizes = $sizes;
 		$response->delivery = $delivery;
