@@ -158,6 +158,10 @@ class Products {
 			$endDate = new \DateTime();
 			$badge = '';
 			$badgeType = '';
+			if ($product->badge) {
+				$badge = $product->badge->title;
+				$badgeType = $product->badge->name;
+			}
 
 			if ($product->new == 1) {
 				$badge = 'НОВИНКА';
