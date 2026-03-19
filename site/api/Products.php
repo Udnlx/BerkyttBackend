@@ -405,10 +405,20 @@ class Products {
 			];
 		}
 
+		$productSectionName ='';
+		if ($sectionPage->name === 'catalog') {
+			$productSectionName = 'men';
+		}
+		if ($sectionPage->name === 'women-catalog') {
+			$productSectionName = 'women';
+		}
+
 		$response->id = $product->id;
 		$response->name = $product->name;
 		$response->productCategory = $categoryPage->title;
+		$response->productCategoryName = $categoryPage->name;
 		$response->productSection  = $sectionPage->title;
+		$response->productSectionName  = $productSectionName;
 		$response->title = $product->title;
 		$response->price = $price;
 		$response->fullPrice = $fullPrice;
