@@ -98,8 +98,10 @@ class Products {
 		}
 
 		$size = null;
-		if (!empty($data->size)) {
+		if ($data->size != 'all') {
 			$size = (int) $data->size;
+		} else {
+			$size = null;
 		}
 
 		$pageSection = wire('pages')->get('template=products, name=' . $section);

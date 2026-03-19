@@ -25,8 +25,8 @@ $routes = [
 	// ],
 
 	// 'getproducts' => [
-	// 	['OPTIONS', '{section}', ['GET']], // this is needed for CORS Requests
-	// 	['GET', '{section}/{category}/{page}', Products::class, 'getProducts', ['auth' => false]],
+	// 	['OPTIONS', '', ['GET']],
+	// 	['GET', '', Products::class, 'getProducts', ['auth' => false]],
 	// ],
 
 	'getcategories' => [
@@ -35,8 +35,8 @@ $routes = [
 	],
 
 	'getproducts' => [
-		['OPTIONS', '', ['GET']],
-		['GET', '', Products::class, 'getProducts', ['auth' => false]],
+		['OPTIONS', '{section}', ['GET']], // this is needed for CORS Requests
+		['GET', '{section}/{category}/{size}/{page}', Products::class, 'getProducts', ['auth' => false]],
 	],
 
 	'getproductname' => [
