@@ -356,7 +356,7 @@ class Products {
 		}
 
 		$likeit = [];
-		$likeitProducts = $categoryPage->children('template=product, limit=4');
+		$likeitProducts = $categoryPage->children('template=product')->getRandom(4);
 		foreach ($likeitProducts as $likeitProduct) {
 			$img1 = $likeitProduct->images->eq(0);
 			$img2 = $likeitProduct->images->eq(1);
