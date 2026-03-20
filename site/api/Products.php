@@ -343,13 +343,12 @@ class Products {
 
 		$comments = [];
 		$totalComments = 0;
-		$productComments = $product->comments->find("status>=0");
+		$productComments = $product->comments->find("status=1");
 		foreach ($productComments as $comment) {
 			$totalComments ++;
 			$comments[] = [
 				'id'  => $comment->id,
 				'author' => $comment->cite,
-				'email' => $comment->email,
 				'text' => $comment->text,
 				'created' => $comment->created,
 			];

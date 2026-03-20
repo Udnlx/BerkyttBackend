@@ -10,6 +10,17 @@ class Mainpage {
 
         $mainPage = wire('pages')->get('template=home');
 
+		//ОСНОВНЫЕ ДАННЫЕ
+		$info = [];
+		$info[] = [
+			'address' => $mainPage->address,
+			'main_phone' => $mainPage->main_phone,
+			'mobile_phone' => $mainPage->mobile_phone,
+			'whatsapp' => $mainPage->whatsapp,
+			'email' => $mainPage->email,
+		];
+		//ОСНОВНЫЕ ДАННЫЕ
+
 		//ДЛЯ СЕКЦИИ НАШИ НОВИНКИ
         $categoriesForNew = $mainPage->categories_for_new;
         $btnFiltersForNew = ["Все новинки"];
@@ -182,7 +193,6 @@ class Mainpage {
 				$all[] = [
 					'page_id'  => $p->id,
 					'author'   => $c->cite,
-					// 'email' => $c->email, // лучше не отдавать в API
 					'text'     => $c->text,
 					'created'  => $c->created,
 				];
@@ -192,6 +202,7 @@ class Mainpage {
 		$commentsForMain = array_slice($all, 0, $limit);
 		//ДЛЯ СЕКЦИИ ОТЗЫВЫ
         
+		$response->info = $info;
         $response->idMianPage = $mainPage->id;
         $response->btnFiltersForNew = $btnFiltersForNew;
         $response->productsForNew = $productsForNew;
@@ -199,6 +210,33 @@ class Mainpage {
 		$response->btnFiltersForBest = $btnFiltersForBest;
 		$response->productsForBest = $productsForBest;
 		$response->commentsForMain = $commentsForMain;
+
+		return $response;
+    }
+
+
+
+
+
+	public static function mainInfo($data) {
+        $data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+		
+		$response = new \StdClass();
+
+        $mainPage = wire('pages')->get('template=home');
+
+		//ОСНОВНЫЕ ДАННЫЕ
+		$info = [];
+		$info[] = [
+			'address' => $mainPage->address,
+			'main_phone' => $mainPage->main_phone,
+			'mobile_phone' => $mainPage->mobile_phone,
+			'whatsapp' => $mainPage->whatsapp,
+			'email' => $mainPage->email,
+		];
+		//ОСНОВНЫЕ ДАННЫЕ
+        
+		$response->info = $info;
 
 		return $response;
     }

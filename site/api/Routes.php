@@ -30,6 +30,11 @@ $routes = [
 	// 	['GET', '', Products::class, 'getProducts', ['auth' => false]],
 	// ],
 
+	'maininfo' => [
+		['OPTIONS', '', ['GET']],
+		['GET', '', Mainpage::class, 'maininfo', ['auth' => false]],
+	],
+
 	'mainpage' => [
 		['OPTIONS', '', ['GET']],
 		['GET', '', Mainpage::class, 'mainpage', ['auth' => false]],
