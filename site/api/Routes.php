@@ -32,17 +32,22 @@ $routes = [
 
 	'maininfo' => [
 		['OPTIONS', '', ['GET']],
-		['GET', '', Mainpage::class, 'maininfo', ['auth' => false]],
+		['GET', '', Mainpage::class, 'mainInfo', ['auth' => false]],
 	],
 
 	'mainpage' => [
 		['OPTIONS', '', ['GET']],
-		['GET', '', Mainpage::class, 'mainpage', ['auth' => false]],
+		['GET', '', Mainpage::class, 'mainPage', ['auth' => false]],
+	],
+
+	'getpage' => [
+		['OPTIONS', '{page}', ['GET']], // this is needed for CORS Requests
+		['GET', '{page}', Mainpage::class, 'getPage', ['auth' => false]],
 	],
 
 	'getcategories' => [
 		['OPTIONS', '{section}', ['GET']], // this is needed for CORS Requests
-		['GET', '{section}', Products::class, 'getcategories', ['auth' => false]],
+		['GET', '{section}', Products::class, 'getCategories', ['auth' => false]],
 	],
 
 	'getproducts' => [

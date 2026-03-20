@@ -3,6 +3,33 @@
 namespace ProcessWire;
 
 class Mainpage {
+	public static function mainInfo($data) {
+        $data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+		
+		$response = new \StdClass();
+
+        $mainPage = wire('pages')->get('template=home');
+
+		//ОСНОВНЫЕ ДАННЫЕ
+		$info = [];
+		$info[] = [
+			'address' => $mainPage->address,
+			'main_phone' => $mainPage->main_phone,
+			'mobile_phone' => $mainPage->mobile_phone,
+			'whatsapp' => $mainPage->whatsapp,
+			'email' => $mainPage->email,
+		];
+		//ОСНОВНЫЕ ДАННЫЕ
+        
+		$response->info = $info;
+
+		return $response;
+    }
+
+
+
+
+
     public static function mainPage($data) {
         $data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
 		
@@ -211,25 +238,17 @@ class Mainpage {
 
 
 
-	public static function mainInfo($data) {
-        $data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+	public static function getPage($data) {
+        $data = AppApiHelper::checkAndSanitizeRequiredParameters($data, ['page|text']);
 		
 		$response = new \StdClass();
 
-        $mainPage = wire('pages')->get('template=home');
-
-		//ОСНОВНЫЕ ДАННЫЕ
-		$info = [];
-		$info[] = [
-			'address' => $mainPage->address,
-			'main_phone' => $mainPage->main_phone,
-			'mobile_phone' => $mainPage->mobile_phone,
-			'whatsapp' => $mainPage->whatsapp,
-			'email' => $mainPage->email,
-		];
-		//ОСНОВНЫЕ ДАННЫЕ
+        $page = wire('pages')->get('name=' . $data->page);
         
-		$response->info = $info;
+		$response->pageid = $page->id;
+		$response->name = $page->name;
+		$response->title = $page->title;
+		$response->body = $page->body;
 
 		return $response;
     }
