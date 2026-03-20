@@ -10,17 +10,6 @@ class Mainpage {
 
         $mainPage = wire('pages')->get('template=home');
 
-		//ОСНОВНЫЕ ДАННЫЕ
-		$info = [];
-		$info[] = [
-			'address' => $mainPage->address,
-			'main_phone' => $mainPage->main_phone,
-			'mobile_phone' => $mainPage->mobile_phone,
-			'whatsapp' => $mainPage->whatsapp,
-			'email' => $mainPage->email,
-		];
-		//ОСНОВНЫЕ ДАННЫЕ
-
 		//ДЛЯ СЕКЦИИ НАШИ НОВИНКИ
         $categoriesForNew = $mainPage->categories_for_new;
         $btnFiltersForNew = ["Все новинки"];
@@ -107,12 +96,17 @@ class Mainpage {
 		//ДЛЯ СЕКЦИИ НАШИ КОЛЛЕКЦИИ
 
 		//ДЛЯ СЕКЦИИ ЛУЧШЕЕ
-		$btnFiltersForBest = ["Топ", "Распродажа", "Новинка"];
 		$filteredProducts = new \ProcessWire\PageArray();
 
 		$badge = wire('pages')->get('template=badge, name=top');
 		$productsTop = wire('pages')->find('template=product, badge=' . $badge)->getRandom(7);
 		$filteredProducts->add($productsTop);
+
+		if ($productsTop->count() > 0) {
+			$btnFiltersForBest = ["Топ", "Распродажа", "Новинка"];
+		} else {
+			$btnFiltersForBest = ["Распродажа", "Новинка"];
+		}
 
 		$productsSale = wire('pages')->find('template=product, discount>0')->getRandom(7);
 		$filteredProducts->add($productsSale);
@@ -202,7 +196,6 @@ class Mainpage {
 		$commentsForMain = array_slice($all, 0, $limit);
 		//ДЛЯ СЕКЦИИ ОТЗЫВЫ
         
-		$response->info = $info;
         $response->idMianPage = $mainPage->id;
         $response->btnFiltersForNew = $btnFiltersForNew;
         $response->productsForNew = $productsForNew;
