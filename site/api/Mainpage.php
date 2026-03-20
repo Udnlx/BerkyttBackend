@@ -10,6 +10,7 @@ class Mainpage {
 
         $mainPage = wire('pages')->get('template=home');
 
+		//ДЛЯ СЕКЦИИ НАШИ НОВИНКИ
         $categoriesForNew = $mainPage->categories_for_new;
         $btnFiltersForNew = ["Все новинки"];
         $filteredProducts = new \ProcessWire\PageArray();
@@ -74,7 +75,9 @@ class Mainpage {
 				'endDate' => $endDate,
 			];
 		}
+		//ДЛЯ СЕКЦИИ НАШИ НОВИНКИ
 
+		//ДЛЯ СЕКЦИИ НАШИ КОЛЛЕКЦИИ
         $catalog = wire('pages')->get('template=products, name=catalog');
         $allCategories = $catalog->children('template=category');
         $ourCollections = [];
@@ -90,11 +93,112 @@ class Mainpage {
                 'link' => $link,
             ];
         }
+		//ДЛЯ СЕКЦИИ НАШИ КОЛЛЕКЦИИ
+
+		//ДЛЯ СЕКЦИИ ЛУЧШЕЕ
+		$btnFiltersForBest = ["Топ", "Распродажа", "Новинка"];
+		$filteredProducts = new \ProcessWire\PageArray();
+
+		$badge = wire('pages')->get('template=badge, name=top');
+		$productsTop = wire('pages')->find('template=product, badge=' . $badge)->getRandom(7);
+		$filteredProducts->add($productsTop);
+
+		$productsSale = wire('pages')->find('template=product, discount>0')->getRandom(7);
+		$filteredProducts->add($productsSale);
+
+		$productsNew = wire('pages')->find('template=product, new=1')->getRandom(7);
+		$filteredProducts->add($productsNew);
+
+		$productsForBest = [];
+		foreach ($filteredProducts as $product) {
+            $categoryPage = $product->parent;
+
+			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
+			$img1 = $images->first();
+			$img2 = $images->eq(1);
+
+			$productFullPriceRaw = (string) $product->price;
+			$productDiscountRaw  = (string) $product->discount;
+
+			$productFullPrice = (float) str_replace([' ', ','], ['', '.'], $productFullPriceRaw);
+			$productDiscount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $productDiscountRaw);
+
+			$price = (int) ceil($productFullPrice - ($productFullPrice * $productDiscount / 100)); 
+			
+			$raw = (string) $product->timer_sale;
+			$dt = \DateTime::createFromFormat('d.m.Y', $raw);
+			if ($dt) {
+				$dt->setTime(23, 59, 59);
+			}
+			$endDate = $dt ? $dt->format('Y-m-d\TH:i:s') : null;
+			$badge = '';
+			$badgeType = '';
+			if ($product->badge) {
+				$badge = $product->badge->title;
+				$badgeType = $product->badge->name;
+			}
+
+			if ($product->new == 1) {
+				$badge = 'НОВИНКА';
+				$badgeType = 'new';
+			}
+
+			if ($productDiscount > 0) {
+				$badge = 'РАСПРОДАЖА';
+				$badgeType = 'sale';
+			}
+
+			$productsForBest[] = [
+				'id' => $product->id,
+                'category' => $categoryPage->title,
+				'name' => $product->name,
+				'title' => $product->title,
+				'image' => $img1 ? $img1->url : '',
+				'hoverImage' => $img2 ? $img2->url : ($img1 ? $img1->url : ''),
+				'price' => $price,
+				'fullPrice' => $productFullPrice,
+				'discount' => $productDiscount,
+				'badge' => $badge,
+				'badgeType' => $badgeType,
+				'endDate' => $endDate,
+			];
+		}
+		//ДЛЯ СЕКЦИИ ЛУЧШЕЕ
+
+		//ДЛЯ СЕКЦИИ ОТЗЫВЫ
+		$fieldName = 'comments';
+		$limit = 7;
+		$pagesWithComments = wire('pages')->find("$fieldName.count>0, include=all");
+		$all = [];
+		foreach ($pagesWithComments as $p) {
+			foreach ($p->$fieldName as $c) {
+
+				// только одобренные (если метод есть)
+				if (method_exists($c, 'isApproved') && !$c->isApproved()) continue;
+
+				// исключим спам
+				if (defined('ProcessWire\\Comment::statusSpam') && ($c->status & \ProcessWire\Comment::statusSpam)) continue;
+
+				$all[] = [
+					'page_id'  => $p->id,
+					'author'   => $c->cite,
+					// 'email' => $c->email, // лучше не отдавать в API
+					'text'     => $c->text,
+					'created'  => $c->created,
+				];
+			}
+		}
+		shuffle($all);
+		$commentsForMain = array_slice($all, 0, $limit);
+		//ДЛЯ СЕКЦИИ ОТЗЫВЫ
         
         $response->idMianPage = $mainPage->id;
         $response->btnFiltersForNew = $btnFiltersForNew;
         $response->productsForNew = $productsForNew;
         $response->ourCollections = $ourCollections;
+		$response->btnFiltersForBest = $btnFiltersForBest;
+		$response->productsForBest = $productsForBest;
+		$response->commentsForMain = $commentsForMain;
 
 		return $response;
     }
