@@ -243,7 +243,7 @@ class Mainpage {
 		
 		$response = new \StdClass();
 
-        $page = wire('pages')->get('name=' . $data->page);
+        $page = wire('pages')->get('template=basic-page|doc, name=' . $data->page);
         
 		$response->pageid = $page->id;
 		$response->name = $page->name;
