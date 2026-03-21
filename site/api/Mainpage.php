@@ -20,8 +20,38 @@ class Mainpage {
 			'email' => $mainPage->email,
 		];
 		//ОСНОВНЫЕ ДАННЫЕ
+
+		//МЕНЮ МУЖСКОЕ
+		$menuManAll = wire('pages')->get('template=products, name=catalog')->children();
+
+		$menuMan = [];
+		foreach ($menuManAll as $item) {
+			$menuMan[] = [
+				'id' => $item->id,
+				'section' => 'men',
+				'title' => $item->title,
+				'name' => $item->name,
+			];
+		}
+		//МЕНЮ МУЖСКОЕ
+
+		//МЕНЮ ЖЕНСКОЕ
+		$menuWomanAll = wire('pages')->get('template=products, name=women-catalog')->children();
+
+		$menuWoman = [];
+		foreach ($menuWomanAll as $item) {
+			$menuWoman[] = [
+				'id' => $item->id,
+				'section' => 'women',
+				'title' => $item->title,
+				'name' => $item->name,
+			];
+		}
+		//МЕНЮ ЖЕНСКОЕ
         
 		$response->info = $info;
+		$response->menuMan = $menuMan;
+		$response->menuWoman = $menuWoman;
 
 		return $response;
     }
