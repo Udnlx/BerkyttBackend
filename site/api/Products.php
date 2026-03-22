@@ -264,6 +264,7 @@ class Products {
 		$sizes = [];
 		foreach ($product->sizes as $size) {
 			$sizes[] = [
+				'idSize'  => $size->id,
 				'scancode'  => $size->scancode,
 				'storage'  => $size->storage,
 				'russianSize'  => $size->size->russian_size,
