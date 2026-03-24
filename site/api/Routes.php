@@ -8,6 +8,7 @@ require_once wire('config')->paths->AppApi . 'classes/AppApiHelper.php';
 // require_once __DIR__ . '/Example.php';
 require_once __DIR__ . '/Products.php';
 require_once __DIR__ . '/Mainpage.php';
+require_once __DIR__ . '/Confirm.php';
 
 $routes = [
 	// ['OPTIONS', 'test', ['GET']], // this is needed for CORS Requests
@@ -41,22 +42,27 @@ $routes = [
 	],
 
 	'getpage' => [
-		['OPTIONS', '{page}', ['GET']], // this is needed for CORS Requests
+		['OPTIONS', '{page}', ['GET']],
 		['GET', '{page}', Mainpage::class, 'getPage', ['auth' => false]],
 	],
 
 	'getcategories' => [
-		['OPTIONS', '{section}', ['GET']], // this is needed for CORS Requests
+		['OPTIONS', '{section}', ['GET']],
 		['GET', '{section}', Products::class, 'getCategories', ['auth' => false]],
 	],
 
 	'getproducts' => [
-		['OPTIONS', '{section}', ['GET']], // this is needed for CORS Requests
+		['OPTIONS', '{section}', ['GET']],
 		['GET', '{section}/{category}/{size}/{page}', Products::class, 'getProducts', ['auth' => false]],
 	],
 
 	'getproductname' => [
-		['OPTIONS', '{name}', ['GET']], // this is needed for CORS Requests
+		['OPTIONS', '{name}', ['GET']],
 		['GET', '{name}', Products::class, 'getProductName', ['auth' => false]],
+	],
+
+	'confirmorder' => [
+		['OPTIONS', '', ['GET']],
+		['GET', '', Confirm::class, 'confirmOrder', ['auth' => false]],
 	],
 ];
