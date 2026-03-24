@@ -8,7 +8,7 @@ class Confirm {
 
 		$response = new \StdClass();
 
-        $response->orderId = $data->orderId;
+        $response->orderId = $data->paymentMethod;
 
 		return $response;
     }
