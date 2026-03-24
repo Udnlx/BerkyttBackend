@@ -62,7 +62,7 @@ $routes = [
 	],
 
 	'confirmorder' => [
-		['OPTIONS', '', ['GET']],
-		['GET', '', Confirm::class, 'confirmOrder', ['auth' => false]],
+		['OPTIONS', '', ['GET', 'POST', 'OPTIONS']],
+		['POST', '', Confirm::class, 'confirmOrder', ['auth' => false]],
 	],
 ];
