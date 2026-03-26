@@ -115,24 +115,24 @@ class Confirm {
 		$email = $data->buyer->email;
 		$phone = $data->buyer->phone;
 
-        // if (!$user->isLoggedin()) {
-		// 	if (!$users->get('email=' . $email) instanceof NullPage) {
-		// 		$customer = $users->get('email=' . $email);
-		// 	} else {
-		// 		$customer = $users->newUser();
-		// 		$customer->addRole('customer');
-		// 		$pw = new Password();
-		// 		$customer->pass = $pw->randomBase64String(10);
-		// 		$customer->set('title', $fio);
-		// 		$customer->set('firstname', $fio);
-		// 		$customer->set('email', $email);
-		// 		$customer->set('main_phone', $phone);
-		// 		$customer->save();
-		// 		$users->setCurrentUser($customer);
-		// 	}
-		// } else {
-		// 	$customer = $user;
-		// }
+        if (!wire('user')->isLoggedin()) {
+			if (!wire('users')->get('email=' . $email) instanceof NullPage) {
+				$customer = wire('users')->get('email=' . $email);
+			} else {
+				$customer = wire('users')->newUser();
+				$customer->addRole('customer');
+				$pw = new Password();
+				$customer->pass = $pw->randomBase64String(10);
+				$customer->set('title', $fio);
+				$customer->set('firstname', $fio);
+				$customer->set('email', $email);
+				$customer->set('main_phone', $phone);
+				$customer->save();
+				wire('users')->setCurrentUser($customer);
+			}
+		} else {
+			$customer = wire('user');
+		}
 
         $delivery = null;
         if ($data->deliveryMethod == 'pickup') {
@@ -153,7 +153,7 @@ class Confirm {
         $order = new Page;
 		$order->template = wire('templates')->get('order');
 		$order->parent = wire('pages')->get('template=orders');
-		$order->customer = 16329;
+		$order->customer = $customer;
 		$order->order_status = 1;
 		$order->delivery = $delivery;
 		$order->payment = $payment;
