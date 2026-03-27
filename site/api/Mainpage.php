@@ -67,6 +67,26 @@ class Mainpage {
 
         $mainPage = wire('pages')->get('template=home');
 
+		// Получаем поле SeoMaestro
+    	$seoField = $mainPage->seo;
+
+		$metaData = [
+			'title' => (string) $seoField->meta->title,
+			'description' => (string) $seoField->meta->description,
+			'keywords' => (string) $seoField->meta->keywords,
+			'canonicalUrl' => (string) $seoField->meta->canonicalUrl,
+		];
+
+		$ogData = [
+			'title'       => (string) $seoField->og->title,
+			'description' => (string) $seoField->og->description,
+			'image'       => (string) $seoField->og->image,
+			'imageAlt'    => (string) $seoField->og->imageAlt,
+			'type'        => (string) $seoField->og->type,
+			'locale'      => (string) $seoField->og->locale,
+			'siteName'    => (string) $seoField->og->siteName,
+		];
+
 		//ДЛЯ СЕКЦИИ НАШИ НОВИНКИ
         $categoriesForNew = $mainPage->categories_for_new;
         $btnFiltersForNew = ["Все новинки"];
@@ -260,6 +280,8 @@ class Mainpage {
 		$response->btnFiltersForBest = $btnFiltersForBest;
 		$response->productsForBest = $productsForBest;
 		$response->commentsForMain = $commentsForMain;
+		$response->metaData = $metaData;
+		$response->ogData = $ogData;
 
 		return $response;
     }
@@ -274,11 +296,33 @@ class Mainpage {
 		$response = new \StdClass();
 
         $page = wire('pages')->get('template=basic-page|doc, name=' . $data->page);
+
+		// Получаем поле SeoMaestro
+    	$seoField = $page->seo;
+
+		$metaData = [
+			'title' => (string) $seoField->meta->title,
+			'description' => (string) $seoField->meta->description,
+			'keywords' => (string) $seoField->meta->keywords,
+			'canonicalUrl' => (string) $seoField->meta->canonicalUrl,
+		];
+
+		$ogData = [
+			'title'       => (string) $seoField->og->title,
+			'description' => (string) $seoField->og->description,
+			'image'       => (string) $seoField->og->image,
+			'imageAlt'    => (string) $seoField->og->imageAlt,
+			'type'        => (string) $seoField->og->type,
+			'locale'      => (string) $seoField->og->locale,
+			'siteName'    => (string) $seoField->og->siteName,
+		];
         
 		$response->pageid = $page->id;
 		$response->name = $page->name;
 		$response->title = $page->title;
 		$response->body = $page->body;
+		$response->metaData = $metaData;
+		$response->ogData = $ogData;
 
 		return $response;
     }
