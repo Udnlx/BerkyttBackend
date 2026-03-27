@@ -36,6 +36,11 @@ $routes = [
 		['GET', '', Mainpage::class, 'mainInfo', ['auth' => false]],
 	],
 
+	'topbanner' => [
+		['OPTIONS', '', ['GET']],
+		['GET', '', Mainpage::class, 'topBanner', ['auth' => false]],
+	],
+
 	'mainpage' => [
 		['OPTIONS', '', ['GET']],
 		['GET', '', Mainpage::class, 'mainPage', ['auth' => false]],

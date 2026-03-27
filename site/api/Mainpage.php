@@ -60,12 +60,48 @@ class Mainpage {
 
 
 
+	public static function topBanner($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+		
+		$response = new \StdClass();
+
+        $mainPage = wire('pages')->get('template=home');
+
+		// Получаем топ баннер сверху
+		$datenow = wireDate('Y-m-d');
+		$topBanner = '';
+		$topInfoBannerElement = wire('pages')->get("template=top_info_banner");
+		if ($topInfoBannerElement->date_start && $topInfoBannerElement->date_finish) {
+			if ($datenow >= $topInfoBannerElement->date_start && $datenow <= $topInfoBannerElement->date_finish) {
+				$topBanner = $topInfoBannerElement->body;
+			}
+		}
+
+		$response->topBanner = $topBanner;
+
+		return $response;
+	}
+
+
+
+
+
     public static function mainPage($data) {
         $data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
 		
 		$response = new \StdClass();
 
         $mainPage = wire('pages')->get('template=home');
+
+		// Получаем топ баннер сверху
+		$datenow = wireDate('Y-m-d');
+		$topBanner = '';
+		$topInfoBannerElement = wire('pages')->get("template=top_info_banner");
+		if ($topInfoBannerElement->date_start && $topInfoBannerElement->date_finish) {
+			if ($datenow >= $topInfoBannerElement->date_start && $datenow <= $topInfoBannerElement->date_finish) {
+				$topBanner = $topInfoBannerElement->body;
+			}
+		}
 
 		// Получаем поле SeoMaestro
     	$seoField = $mainPage->seo;
@@ -280,6 +316,7 @@ class Mainpage {
 		$response->btnFiltersForBest = $btnFiltersForBest;
 		$response->productsForBest = $productsForBest;
 		$response->commentsForMain = $commentsForMain;
+		$response->topBanner = $topBanner;
 		$response->metaData = $metaData;
 		$response->ogData = $ogData;
 
