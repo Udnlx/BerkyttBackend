@@ -219,6 +219,26 @@ class Products {
 			throw new \Exception('Product not found', 404);
 		}
 
+		// Получаем поле SeoMaestro
+    	$seoField = $product->seo;
+
+		$metaData = [
+			'title' => (string) $seoField->meta->title,
+			'description' => (string) $seoField->meta->description,
+			'keywords' => (string) $seoField->meta->keywords,
+			'canonicalUrl' => (string) $seoField->meta->canonicalUrl,
+		];
+
+		$ogData = [
+			'title'       => (string) $seoField->og->title,
+			'description' => (string) $seoField->og->description,
+			'image'       => (string) $seoField->og->image,
+			'imageAlt'    => (string) $seoField->og->imageAlt,
+			'type'        => (string) $seoField->og->type,
+			'locale'      => (string) $seoField->og->locale,
+			'siteName'    => (string) $seoField->og->siteName,
+		];
+
 		$categoryPage = $product->parent;          						// Page категории
 		$sectionPage  = $categoryPage->parent;     						// Page раздела (родитель категории)
 
@@ -440,6 +460,8 @@ class Products {
 		$response->comments = $comments;
 		$response->idCategory = $categoryPage->id;
 		$response->likeit = $likeit;
+		$response->metaData = $metaData;
+		$response->ogData = $ogData;
 
 		return $response;
 	}
