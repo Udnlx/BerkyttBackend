@@ -209,6 +209,94 @@ class Products {
 
 
 
+	public static function searchProducts($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+		
+		$response = new \StdClass();
+
+		$name = $_GET['name'] ?? '';
+
+		$limit = 9;
+		$p = 0;
+		$current_page = 1;
+
+		if (!empty($data->page)) {
+			$current_page = (int) $data->page;
+			if ($current_page < 1) {
+				$current_page = 1;
+			}
+			$p = ($current_page - 1) * $limit;
+		}
+
+		$allProducts = wire('pages')->find('template=product, title*=' . $name);
+
+		$total = $allProducts->count();
+		$pagedProducts = $allProducts->slice($p, $limit);
+
+		$products = [];
+		foreach ($pagedProducts as $product) {
+			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
+			$img1 = $images->first();
+			$img2 = $images->eq(1);
+
+			$productFullPriceRaw = (string) $product->price;
+			$productDiscountRaw  = (string) $product->discount;
+
+			$productFullPrice = (float) str_replace([' ', ','], ['', '.'], $productFullPriceRaw);
+			$productDiscount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $productDiscountRaw);
+
+			$price = (int) ceil($productFullPrice - ($productFullPrice * $productDiscount / 100)); 
+			
+			$raw = (string) $product->timer_sale;
+			$dt = \DateTime::createFromFormat('d.m.Y', $raw);
+			if ($dt) {
+				$dt->setTime(23, 59, 59);
+			}
+			$endDate = $dt ? $dt->format('Y-m-d\TH:i:s') : null;
+			$badge = '';
+			$badgeType = '';
+			if ($product->badge) {
+				$badge = $product->badge->title;
+				$badgeType = $product->badge->name;
+			}
+
+			if ($product->new == 1) {
+				$badge = 'НОВИНКА';
+				$badgeType = 'new';
+			}
+
+			if ($productDiscount > 0) {
+				$badge = 'РАСПРОДАЖА';
+				$badgeType = 'sale';
+			}
+
+			$products[] = [
+				'id' => $product->id,
+				'name' => $product->name,
+				'title' => $product->title,
+				'image' => $img1 ? $img1->url : '',
+				'hoverImage' => $img2 ? $img2->url : ($img1 ? $img1->url : ''),
+				'price' => $price,
+				'fullPrice' => $productFullPrice,
+				'discount' => $productDiscount,
+				'badge' => $badge,
+				'badgeType' => $badgeType,
+				'endDate' => $endDate,
+			];
+		}
+
+		$response->searchto = $data->name;
+		$response->page = $current_page;
+		$response->totalPage = ceil($total / $limit);
+		$response->products = $products;
+
+		return $response;
+	}
+
+
+
+
+
 	public static function getProductName($data) {
 		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, ['name|text']);
 		
