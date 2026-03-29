@@ -162,7 +162,7 @@ class Confirm {
             $order->address = 'Забрать со склада: г.Москва, Сормовский проезд д. 11/7';
         }
         if ($data->deliveryMethod == 'cdek') {
-            $order->address = 'Доставка с помощью службы СДЭК: Адрес ПВЗ';
+            $order->address = $data->deliveryType . ': ' . $data->deliveryAddress;
         }
 		$order->save();
 		$order->setAndSave('title', 'Заказ №' . $data->orderNumber);
