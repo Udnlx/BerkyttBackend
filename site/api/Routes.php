@@ -9,6 +9,7 @@ require_once wire('config')->paths->AppApi . 'classes/AppApiHelper.php';
 require_once __DIR__ . '/Products.php';
 require_once __DIR__ . '/Mainpage.php';
 require_once __DIR__ . '/Confirm.php';
+require_once __DIR__ . '/ApiAuth.php';
 
 $routes = [
 	// ['OPTIONS', 'test', ['GET']], // this is needed for CORS Requests
@@ -74,5 +75,10 @@ $routes = [
 	'confirmorder' => [
 		['OPTIONS', '', ['POST']],
 		['POST', '', Confirm::class, 'confirmOrder', ['auth' => false]],
+	],
+
+	'login' => [
+		['OPTIONS', '', ['POST']],
+		['POST', '',  ApiAuth::class, 'login', ['auth' => false]],
 	],
 ];
