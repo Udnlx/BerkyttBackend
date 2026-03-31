@@ -85,13 +85,13 @@ class ApiAuth {
 	 * Получение данных текущего пользователя
 	 */
 	public static function me($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+
+		$response = new \StdClass();
+
 		$user = wire('user');
 
-		if (!$user->isLoggedIn()) {
-			throw new \Exception('Пользователь не авторизован', 401);
-		}
-
-		return [
+		$response = [
 			'success' => true,
 			'user' => [
 				'id' => $user->id,
@@ -99,5 +99,7 @@ class ApiAuth {
 				'email' => $user->email
 			]
 		];
+
+		return $response;
 	}
 }

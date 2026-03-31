@@ -10,6 +10,7 @@ require_once __DIR__ . '/Products.php';
 require_once __DIR__ . '/Mainpage.php';
 require_once __DIR__ . '/Confirm.php';
 require_once __DIR__ . '/ApiAuth.php';
+require_once __DIR__ . '/Profile.php';
 
 $routes = [
 	// ['OPTIONS', 'test', ['GET']], // this is needed for CORS Requests
@@ -80,5 +81,15 @@ $routes = [
 	'login' => [
 		['OPTIONS', '', ['POST']],
 		['POST', '',  ApiAuth::class, 'login', ['auth' => false]],
+	],
+
+	'me' => [
+		['OPTIONS', '', ['POST']],
+		['POST', '', ApiAuth::class, 'me', ['auth' => true]],
+	],
+
+	'getorders' => [
+		['OPTIONS', '', ['POST']],
+		['POST', '', Profile::class, 'getOrders', ['auth' => true]],
 	],
 ];
