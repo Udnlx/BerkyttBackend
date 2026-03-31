@@ -65,4 +65,45 @@ class Profile {
 
 		return $response;
 	}
+
+
+
+
+	public static function replaceUserData($data) {
+		if(is_object($data)) $data = (array) $data;
+
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+
+		$response = new \StdClass();
+
+		$user = wire('user');
+
+		$user->of(false);
+		if(isset($data['name'])) {
+			$user->firstname = trim((string)$data['name']);
+		}
+		if(isset($data['email'])) {
+			$user->email = trim((string)$data['email']);
+		}
+		if(isset($data['phone'])) {
+			$user->main_phone = trim((string)$data['phone']);
+		}
+  		$user->save(['firstname', 'email', 'main_phone']);
+		$user->of(true);
+
+		$userInfo = [
+			'success' => true,
+			'user' => [
+				'id' => $user->id,
+				'name' => $user->name,
+				'firstname' => $user->firstname,
+				'email' => $user->email,
+				'phone' => $user->main_phone,
+			]
+		];
+
+		$response->userInfo = $userInfo;
+
+		return $response;
+	}
 }

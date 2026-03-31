@@ -92,4 +92,9 @@ $routes = [
 		['OPTIONS', '', ['POST']],
 		['POST', '', Profile::class, 'getOrders', ['auth' => true]],
 	],
+
+	'replaceuserdata' => [
+		['OPTIONS', '', ['POST']],
+		['POST', '', Profile::class, 'replaceUserData', ['auth' => true]],
+	],
 ];
