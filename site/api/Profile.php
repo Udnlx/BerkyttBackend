@@ -106,4 +106,59 @@ class Profile {
 
 		return $response;
 	}
+
+
+
+
+	public static function register($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+
+		$response = new \StdClass();
+
+		$error = '';
+		$success = true;
+
+		if(wire('users')->get("email=$data->email")->id) {
+			$error = 'Пользователь с таким email уже существует';
+			$success = false;
+		}
+
+		$baseName = wire('sanitizer')->pageName(strstr($data->email, '@', true) ?: $data->email, true);
+		if(!$baseName) $baseName = 'user';
+		$name = $baseName;
+		$i = 1;
+		while(wire('users')->get("name=$name")->id) {
+		$name = $baseName . '-' . (++$i);
+		}
+
+		if ($success == true) {
+			$u = new User();
+    		$u->of(false);
+			$u->name = $name;
+			$u->email = $data->email;
+    		$u->firstname = $data->title;
+			$u->main_phone = $data->phone;
+			$u->pass = $data->password;
+			$u->addRole('customer');
+			$u->save();
+    		$u->of(true);
+		} else {
+			$success = false;
+		}
+
+		$registerInfo = [
+			'success' => $success,
+			'error' => $error,
+			'user' => [
+				'firstname' => $data->title,
+				'email' => $data->email,
+				'phone' => $data->phone,
+				'password' => $data->password,
+			]
+		];
+
+		$response->userInfo = $registerInfo;
+
+		return $response;
+	}
 }
