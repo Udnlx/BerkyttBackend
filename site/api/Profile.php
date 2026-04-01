@@ -77,22 +77,41 @@ class Profile {
 		$response = new \StdClass();
 
 		$user = wire('user');
+		$dataemail = $data['email'];
 
-		$user->of(false);
-		if(isset($data['name'])) {
-			$user->firstname = trim((string)$data['name']);
+		$error = '';
+		$success = true;
+
+		if($user->email == $dataemail) {
+			$error = '';
+			$success = true;
+		} else {
+			if(wire('users')->get("email=$dataemail")->id) {
+				$error = 'Пользователь с таким email уже существует';
+				$success = false;
+			}
 		}
-		if(isset($data['email'])) {
-			$user->email = trim((string)$data['email']);
+
+		if ($success == true) {
+			$user->of(false);
+			if(isset($data['name'])) {
+				$user->firstname = trim((string)$data['name']);
+			}
+			if(isset($data['email'])) {
+				$user->email = trim((string)$data['email']);
+			}
+			if(isset($data['phone'])) {
+				$user->main_phone = trim((string)$data['phone']);
+			}
+			$user->save(['firstname', 'email', 'main_phone']);
+			$user->of(true);
+		} else {
+			$success = false;
 		}
-		if(isset($data['phone'])) {
-			$user->main_phone = trim((string)$data['phone']);
-		}
-  		$user->save(['firstname', 'email', 'main_phone']);
-		$user->of(true);
 
 		$userInfo = [
-			'success' => true,
+			'success' => $success,
+			'error' => $error,
 			'user' => [
 				'id' => $user->id,
 				'name' => $user->name,
