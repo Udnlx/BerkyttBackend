@@ -363,4 +363,63 @@ class Mainpage {
 
 		return $response;
     }
+
+
+
+
+
+	public static function whereToBuy($data) {
+        $data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+		
+		$response = new \StdClass();
+
+        $page = wire('pages')->get('template=wheretobuy');
+
+		$allPoints = [];
+		$cities = $page->children();
+		foreach ($cities as $city) {
+			$points = [];
+			$filials = $city->children();
+			foreach ($filials as $filial) {
+				$points[] = [
+					'title' => $filial->title,
+					'address' => $filial->address,
+					'link' => $filial->link,
+				];
+			}
+			$allPoints[] = [
+				'title' => $city->title,
+				'points' => $points,
+			];
+		}
+
+		// Получаем поле SeoMaestro
+    	$seoField = $page->seo;
+
+		$metaData = [
+			'title' => (string) $seoField->meta->title,
+			'description' => (string) $seoField->meta->description,
+			'keywords' => (string) $seoField->meta->keywords,
+			'canonicalUrl' => (string) $seoField->meta->canonicalUrl,
+		];
+
+		$ogData = [
+			'title'       => (string) $seoField->og->title,
+			'description' => (string) $seoField->og->description,
+			'image'       => (string) $seoField->og->image,
+			'imageAlt'    => (string) $seoField->og->imageAlt,
+			'type'        => (string) $seoField->og->type,
+			'locale'      => (string) $seoField->og->locale,
+			'siteName'    => (string) $seoField->og->siteName,
+		];
+        
+		$response->pageid = $page->id;
+		$response->name = $page->name;
+		$response->title = $page->title;
+		$response->points = $allPoints;
+		$response->metaData = $metaData;
+		$response->ogData = $ogData;
+
+		return $response;
+    }
 }

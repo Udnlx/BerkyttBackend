@@ -53,6 +53,11 @@ $routes = [
 		['GET', '{page}', Mainpage::class, 'getPage', ['auth' => false]],
 	],
 
+	'wheretobuy' => [
+		['OPTIONS', '', ['GET']],
+		['GET', '', Mainpage::class, 'whereToBuy', ['auth' => false]],
+	],
+
 	'getcategories' => [
 		['OPTIONS', '{section}', ['GET']],
 		['GET', '{section}', Products::class, 'getCategories', ['auth' => false]],
