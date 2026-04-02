@@ -180,4 +180,37 @@ class Profile {
 
 		return $response;
 	}
+
+
+
+
+
+	public static function addComment($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+
+		$response = new \StdClass();
+
+		$pageProduct = wire('pages')->get('template=product, name=' . $data->name);
+
+		if ($pageProduct->id) {
+			// Добавляем коммент
+			$date_create = date('Y-m-d');
+			$comment = new Comment;
+			$comment->text = $data->feedback;
+			$comment->cite = $data->author;
+			$comment->created = strtotime($date_create);
+			$comment->email = $data->email;
+			$comment->website = 'https://berkytt.ru/';
+
+			$pageProduct->of(false);
+			$pageProduct->comments->add($comment);
+			$pageProduct->save('comments');
+			//Добавляем коммент
+		}
+
+		$response->idProduct = $pageProduct->id;
+		$response->nameProduct = $pageProduct->name;
+
+		return $response;
+	}
 }

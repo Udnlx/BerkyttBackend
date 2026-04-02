@@ -107,4 +107,9 @@ $routes = [
 		['OPTIONS', '', ['POST']],
 		['POST', '',  Profile::class, 'register', ['auth' => false]],
 	],
+
+	'addcomment' => [
+		['OPTIONS', '', ['POST']],
+		['POST', '',  Profile::class, 'addComment', ['auth' => true]],
+	],
 ];
