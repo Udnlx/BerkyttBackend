@@ -64,7 +64,7 @@ $routes = [
 	],
 
 	'getproducts' => [
-		['OPTIONS', '{section}', ['GET']],
+		['OPTIONS', '{section}/{category}/{size}/{page}', ['GET']],
 		['GET', '{section}/{category}/{size}/{page}', Products::class, 'getProducts', ['auth' => false]],
 	],
 

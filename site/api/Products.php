@@ -146,8 +146,8 @@ class Products {
 		$products = [];
 		foreach ($pagedProducts as $product) {
 			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
-			$img1 = $images->first();
-			$img2 = $images->eq(1);
+			$img1 = $images->first()->size(400,530);
+			$img2 = $images->eq(1)->size(400,530);
 
 			$productFullPriceRaw = (string) $product->price;
 			$productDiscountRaw  = (string) $product->discount;
@@ -236,8 +236,8 @@ class Products {
 		$products = [];
 		foreach ($pagedProducts as $product) {
 			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
-			$img1 = $images->first();
-			$img2 = $images->eq(1);
+			$img1 = $images->first()->size(400,530);
+			$img2 = $images->eq(1)->size(400,530);
 
 			$productFullPriceRaw = (string) $product->price;
 			$productDiscountRaw  = (string) $product->discount;
@@ -340,7 +340,7 @@ class Products {
 
 		$images = [];
 		foreach ($product->images as $image) {
-			$images[] = $image->url;
+			$images[] = $image->size(870, 1147)->url;
 		}
 
 		$video = [];
@@ -467,8 +467,8 @@ class Products {
 		// $likeitProducts = $categoryPage->children('template=product, limit=4');
 		$likeitProducts = $categoryPage->children('template=product')->getRandom(4);
 		foreach ($likeitProducts as $likeitProduct) {
-			$img1 = $likeitProduct->images->eq(0);
-			$img2 = $likeitProduct->images->eq(1);
+			$img1 = $likeitProduct->images->eq(0)->size(400,530);
+			$img2 = $likeitProduct->images->eq(1)->size(400,530);
 
 			$likeitFullPriceRaw = (string) $likeitProduct->price;
 			$likeitDiscountRaw  = (string) $likeitProduct->discount;

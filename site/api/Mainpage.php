@@ -139,8 +139,8 @@ class Mainpage {
             $categoryPage = $product->parent;
 
 			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
-			$img1 = $images->first();
-			$img2 = $images->eq(1);
+			$img1 = $images->first()->size(400,530);
+			$img2 = $images->eq(1)->size(400,530);
 
 			$productFullPriceRaw = (string) $product->price;
 			$productDiscountRaw  = (string) $product->discount;
@@ -232,8 +232,8 @@ class Mainpage {
             $categoryPage = $product->parent;
 
 			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
-			$img1 = $images->first();
-			$img2 = $images->eq(1);
+			$img1 = $images->first()->size(400,530);
+			$img2 = $images->eq(1)->size(400,530);
 
 			$productFullPriceRaw = (string) $product->price;
 			$productDiscountRaw  = (string) $product->discount;
