@@ -58,6 +58,16 @@ class ApiAuth {
 				$token = null;
 			}
 
+			$arrPurchasedProducts = [];
+			$allUserOrders = wire('pages')->find('template=order, customer=' . $user->id);
+			foreach ($allUserOrders as $order) {
+				foreach ($order->products as $product) {
+					$arrPurchasedProducts[] = $product->product->name;
+				}
+			}
+			$purchasedProducts = array_unique($arrPurchasedProducts);
+			$purchasedProducts = array_values($purchasedProducts);
+
 			// Формируем ответ
 			$response = [
 				'success' => true,
@@ -68,7 +78,8 @@ class ApiAuth {
 					'title' => $user->firstname,
 					'email' => $user->email,
 					'phone' => $user->main_phone
-				]
+				],
+				'purchasedProducts' => $purchasedProducts,
 			];
 
 			// Выходим из сессии (токен будет использоваться для аутентификации)
