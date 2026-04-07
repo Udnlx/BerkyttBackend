@@ -108,6 +108,11 @@ $routes = [
 		['POST', '',  Profile::class, 'register', ['auth' => false]],
 	],
 
+	'passremind' => [
+		['OPTIONS', '', ['POST']],
+		['POST', '',  Profile::class, 'passRemind', ['auth' => false]],
+	],
+
 	'addcomment' => [
 		['OPTIONS', '', ['POST']],
 		['POST', '',  Profile::class, 'addComment', ['auth' => true]],

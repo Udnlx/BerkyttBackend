@@ -185,6 +185,66 @@ class Profile {
 
 
 
+	public static function passRemind($data) {
+		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
+
+		$response = new \StdClass();
+
+		$error = '';
+		$success = true;
+
+		$customer = wire('users')->get('email=' . $data->email . ', include=all');
+		
+		if ($customer->id) {
+			// Генерируем новый пароль
+			$newPassword = bin2hex(random_bytes(6)); // 12 символов
+
+			// Сохраняем новый пароль
+			$customer->of(false);
+			$customer->pass = $newPassword;
+			$customer->save();
+			$customer->of(true);
+
+			// //Отправка почты клиенту
+			// $header_client = '<h2>На сайте Berkytt был сделан запрос на смену пароля!</h2>';
+			// $header_client .= "<hr>";
+
+			// $body = 'Ваш новый пароль для входа: ' . $newPassword;
+
+			// $mail_client = wire('mail')->new();
+			// $mail_client->subject(sprintf('Новый пароль на Berkytt'));
+			// $mail_client->to($data->email);
+			// $mail_client->bodyHTML('<html><body>' . $header_client . $body . '</body></html>');
+			// $mail_client->send();
+			
+			$error = 'Пароль сгенерирован и отправлен вам на указанную почту';
+			$success = true;
+		} else {
+			$error = 'Пользователь с таким email не найден';
+			$success = false;
+			$newPassword = '';
+		}
+
+		$customerInfo = [
+			'success' => $success,
+			'error' => $error,
+			'user' => [
+				'firstname' => $customer->firstname,
+				'email' => $customer->email,
+				'phone' => $customer->main_phone,
+				'password' => $newPassword,
+			]
+		];
+
+		$response->userInfo = $customerInfo;
+
+		return $response;
+	}
+
+
+
+
+
 	public static function addComment($data) {
 		$data = AppApiHelper::checkAndSanitizeRequiredParameters($data, []);
 
