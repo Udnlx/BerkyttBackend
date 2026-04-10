@@ -125,12 +125,12 @@ class Mainpage {
 
 		//ДЛЯ СЕКЦИИ НАШИ НОВИНКИ
         $categoriesForNew = $mainPage->categories_for_new;
-        $btnFiltersForNew = ["Все новинки"];
+        $btnFiltersForNew = [];
         $filteredProducts = new \ProcessWire\PageArray();
         foreach ($categoriesForNew as $cat) {
             $btnFiltersForNew[] = $cat->title;
 
-            $likeitProducts = $cat->children('template=product, new=1')->getRandom(7);
+            $likeitProducts = $cat->children('template=product, new=1')->getRandom(8);
             $filteredProducts->add($likeitProducts);
         }
 
@@ -212,7 +212,7 @@ class Mainpage {
 		$filteredProducts = new \ProcessWire\PageArray();
 
 		$badge = wire('pages')->get('template=badge, name=top');
-		$productsTop = wire('pages')->find('template=product, badge=' . $badge)->getRandom(7);
+		$productsTop = wire('pages')->find('template=product, badge=' . $badge)->getRandom(8);
 		$filteredProducts->add($productsTop);
 
 		if ($productsTop->count() > 0) {
@@ -221,10 +221,10 @@ class Mainpage {
 			$btnFiltersForBest = ["Распродажа", "Новинка"];
 		}
 
-		$productsSale = wire('pages')->find('template=product, discount>0')->getRandom(7);
+		$productsSale = wire('pages')->find('template=product, discount>0')->getRandom(8);
 		$filteredProducts->add($productsSale);
 
-		$productsNew = wire('pages')->find('template=product, new=1')->getRandom(7);
+		$productsNew = wire('pages')->find('template=product, new=1')->getRandom(8);
 		$filteredProducts->add($productsNew);
 
 		$productsForBest = [];
