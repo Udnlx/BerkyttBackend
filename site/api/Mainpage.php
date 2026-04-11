@@ -267,21 +267,39 @@ class Mainpage {
 				$dt->setTime(23, 59, 59);
 			}
 			$endDate = $dt ? $dt->format('Y-m-d\TH:i:s') : null;
-			$badge = '';
-			$badgeType = '';
-			if ($product->badge) {
-				$badge = $product->badge->title;
-				$badgeType = $product->badge->name;
-			}
-
+			$badge = [];
 			if ($product->new == 1) {
-				$badge = 'НОВИНКА';
-				$badgeType = 'new';
+				$badge[] = [
+					'id' => 0,
+					'title' => 'НОВИНКА',
+				];
+			}
+			if ($product->badge) {
+				foreach ($product->badge as $badgeItem) {
+					$badge[] = [
+						'id' => $badgeItem->id,
+						'title' => $badgeItem->title,
+					];
+				}
+			}
+			if ($productDiscount > 0) {
+				$badge[] = [
+					'id' => 0,
+					'title' => 'РАСПРОДАЖА',
+				];
 			}
 
-			if ($productDiscount > 0) {
-				$badge = 'РАСПРОДАЖА';
-				$badgeType = 'sale';
+			$sameModels = [];
+			if ($product->same_models) {
+				foreach ($product->same_models->find('limit=3') as $sameModel) {
+					$sameModelImages = $sameModel->images instanceof \ProcessWire\Pageimages ? $sameModel->images : new \ProcessWire\Pageimages($sameModel);
+					$sameModelImg = $sameModelImages->first()->size(400,530);
+					$sameModels[] = [
+						'id' => $sameModel->id,
+						'title' => $sameModel->title,
+						'image' => $sameModelImg ? $sameModelImg->url : '',
+					];
+				}
 			}
 
 			$productsForBest[] = [
@@ -294,9 +312,9 @@ class Mainpage {
 				'price' => $price,
 				'fullPrice' => $productFullPrice,
 				'discount' => $productDiscount,
-				'badge' => $badge,
-				'badgeType' => $badgeType,
 				'endDate' => $endDate,
+				'badge' => $badge,
+				'sameModels' => $sameModels,
 			];
 		}
 		//ДЛЯ СЕКЦИИ ЛУЧШЕЕ
