@@ -146,8 +146,10 @@ class Products {
 		$products = [];
 		foreach ($pagedProducts as $product) {
 			$images = $product->images instanceof \ProcessWire\Pageimages ? $product->images : new \ProcessWire\Pageimages($product);
-			$img1 = $images->first()->size(400,530);
-			$img2 = $images->eq(1)->size(400,530);
+			$firstImage = $images->first();
+			$secondImage = $images->eq(1);
+			$img1 = $firstImage ? $firstImage->size(400, 530) : null;
+			$img2 = $secondImage ? $secondImage->size(400, 530) : null;
 
 			$productFullPriceRaw = (string) $product->price;
 			$productDiscountRaw  = (string) $product->discount;
@@ -155,8 +157,8 @@ class Products {
 			$productFullPrice = (float) str_replace([' ', ','], ['', '.'], $productFullPriceRaw);
 			$productDiscount  = (float) str_replace(['%', ' ', ','], ['', '', '.'], $productDiscountRaw);
 
-			$price = (int) ceil($productFullPrice - ($productFullPrice * $productDiscount / 100)); 
-			
+			$price = (int) ceil($productFullPrice - ($productFullPrice * $productDiscount / 100));
+
 			$raw = (string) $product->timer_sale;
 			$dt = \DateTime::createFromFormat('d.m.Y', $raw);
 			if ($dt) {
