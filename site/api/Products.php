@@ -484,19 +484,39 @@ class Products {
 				$dt->setTime(23, 59, 59);
 			}
 			$endDate = $dt ? $dt->format('Y-m-d\TH:i:s') : null;
-			$badge = '';
-			$badgeType = '';
-			if ($likeitProduct->badge) {
-				$badge = $likeitProduct->badge->title;
-				$badgeType = $likeitProduct->badge->name;
-			}
+			$badge = [];
 			if ($likeitProduct->new == 1) {
-				$badge = 'НОВИНКА';
-				$badgeType = 'new';
+				$badge[] = [
+					'id' => 0,
+					'title' => 'НОВИНКА',
+				];
+			}
+			if ($likeitProduct->badge) {
+				foreach ($likeitProduct->badge as $badgeItem) {
+					$badge[] = [
+						'id' => $badgeItem->id,
+						'title' => $badgeItem->title,
+					];
+				}
 			}
 			if ($likeitDiscount > 0) {
-				$badge = 'РАСПРОДАЖА';
-				$badgeType = 'sale';
+				$badge[] = [
+					'id' => 0,
+					'title' => 'РАСПРОДАЖА',
+				];
+			}
+
+			$likeitSameModels = [];
+			if ($likeitProduct->same_models) {
+				foreach ($likeitProduct->same_models->find('limit=3') as $sameModel) {
+					$sameModelImages = $sameModel->images instanceof \ProcessWire\Pageimages ? $sameModel->images : new \ProcessWire\Pageimages($sameModel);
+					$sameModelImg = $sameModelImages->first()->size(400,530);
+					$likeitSameModels[] = [
+						'id' => $sameModel->id,
+						'title' => $sameModel->title,
+						'image' => $sameModelImg ? $sameModelImg->url : '',
+					];
+				}
 			}
 
 			$likeit[] = [
@@ -508,9 +528,9 @@ class Products {
 				'price'  => $likeitprice,
 				'fullPrice'  => $likeitFullPrice,
 				'discount'  => $likeitDiscount,
-				'badge'  => $badge,
-				'badgeType'  => $badgeType,
 				'endDate'  => $endDate,
+				'badge'  => $badge,
+				'sameModels' => $likeitSameModels,
 			];
 		}
 
