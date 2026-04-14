@@ -104,15 +104,22 @@ class Products {
 			$size = null;
 		}
 
-		$pageSection = wire('pages')->get('template=products, name=' . $section);
-		$pageCategory = $pageSection->get('template=category, name=' . $data->category);
-
-		$selector = 'template=product';
-		if ($size) {
-			$selector .= ', sizes.size=' . $size;
+		if ($data->category == 'all') {
+			$pageSection = wire('pages')->get('template=products, name=' . $section);
+			$selector = 'template=product';
+			if ($size) {
+				$selector .= ', sizes.size=' . $size;
+			}
+			$allProducts = $pageSection->find($selector);
+		} else {
+			$pageSection = wire('pages')->get('template=products, name=' . $section);
+			$pageCategory = $pageSection->get('template=category, name=' . $data->category);
+			$selector = 'template=product';
+			if ($size) {
+				$selector .= ', sizes.size=' . $size;
+			}
+			$allProducts = $pageCategory->children($selector);
 		}
-
-		$allProducts = $pageCategory->children($selector);
 
 		$filteredProducts = new \ProcessWire\PageArray();
 
